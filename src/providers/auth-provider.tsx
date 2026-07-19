@@ -1,40 +1,65 @@
 'use client';
 
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, ReactNode, useCallback } from 'react';
 import { AuthContext, User } from '@/contexts/auth-context';
-import { getToken, setToken as setLocalToken, removeToken as removeLocalToken } from '@/utils/token';
+import { getAccessToken, setAccessToken, setRefreshToken, removeAccessToken, removeRefreshToken } from '@/utils/token';
+import { authService } from '@/services/auth/auth.service';
+import { ROUTES } from '@/constants/routes';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Basic check for token on mount
-    const token = getToken();
-    if (token) {
-      // In a real application, you would validate the token with an API call here.
-      // For this foundation, we just assume they are authenticated if a token exists.
-      setIsAuthenticated(true);
-    }
-    setIsLoading(false);
+    const initAuth = async () => {
+      const token = getAccessToken();
+      if (token) {
+        try {
+          // The axios interceptor handles refresh automatically if this fails with 401
+          const userData = await authService.getCurrentUser();
+          setUser(userData);
+          setIsAuthenticated(true);
+        } catch (error) {
+          // If the request fails (even after interceptor refresh attempts), the interceptor will clear tokens.
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initAuth();
   }, []);
 
-  const login = (token: string, userData: User) => {
-    setLocalToken(token);
+  const login = useCallback((accessToken: string, refreshToken: string, userData: User) => {
+    setAccessToken(accessToken);
+    setRefreshToken(refreshToken);
     setUser(userData);
     setIsAuthenticated(true);
-  };
+  }, []);
 
-  const logout = () => {
-    removeLocalToken();
+  const logout = useCallback(() => {
+    removeAccessToken();
+    removeRefreshToken();
     setUser(null);
     setIsAuthenticated(false);
-    // You might want to redirect to /login here depending on your routing setup
-  };
+    queryClient.clear();
+    if (typeof window !== 'undefined') {
+      window.location.href = ROUTES.LOGIN;
+    }
+  }, [queryClient]);
+
+  const hasRole = useCallback((role: "ROLE_HOD" | "ROLE_STAFF") => {
+    return user?.roles?.includes(role) ?? false;
+  }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout, hasRole }}>
       {children}
     </AuthContext.Provider>
   );

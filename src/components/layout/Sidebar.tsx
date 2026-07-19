@@ -1,6 +1,12 @@
+'use client';
+
 import Link from 'next/link';
+import { useAuth } from '@/contexts/auth-context';
 
 export const Sidebar = () => {
+  const { hasRole } = useAuth();
+  const isHod = hasRole('ROLE_HOD');
+
   return (
     <aside className="w-64 bg-gray-900 text-white h-screen flex flex-col fixed left-0 top-0 z-30 transition-transform transform">
       <div className="h-16 flex items-center px-6 border-b border-gray-800">
@@ -12,15 +18,56 @@ export const Sidebar = () => {
           <li>
             <Link 
               href="/"
-              className="flex items-center px-3 py-2.5 text-sm font-medium rounded-md bg-gray-800 text-white hover:bg-gray-700 transition-colors"
+              className="flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
             >
-              <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
               Dashboard
             </Link>
           </li>
-          {/* Future module links will go here */}
+          <li>
+            <Link 
+              href="/students"
+              className="flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+            >
+              Students
+            </Link>
+          </li>
+          <li>
+            <Link 
+              href="/batches"
+              className="flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+            >
+              Batches
+            </Link>
+          </li>
+          <li>
+            <Link 
+              href="/sections"
+              className="flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+            >
+              Sections
+            </Link>
+          </li>
+
+          {isHod && (
+            <>
+              <li>
+                <Link 
+                  href="/staff"
+                  className="flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                >
+                  Staff
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  href="/settings"
+                  className="flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                >
+                  Settings
+                </Link>
+              </li>
+            </>
+          )}
         </ul>
       </nav>
       
