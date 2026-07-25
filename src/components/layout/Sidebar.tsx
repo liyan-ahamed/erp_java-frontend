@@ -1,13 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import { LayoutDashboard, GraduationCap, ChevronDown, ChevronLeft } from 'lucide-react';
+import { LayoutDashboard, GraduationCap, ChevronDown, ChevronLeft, Calendar } from 'lucide-react';
 
 export const Sidebar = () => {
-  const { user } = useAuth();
+  const { user, hasRole, logout } = useAuth();
   const pathname = usePathname();
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
 
   const sidebarGlassStyle: React.CSSProperties = {
     background: 'rgba(255, 255, 255, 0.45)',
@@ -50,17 +52,67 @@ export const Sidebar = () => {
           </div>
         </div>
 
-        {/* Active Dashboard Link */}
-        <Link
-          href="/dashboard"
-          className="flex items-center px-4 py-3 rounded-2xl text-slate-800 font-semibold text-base transition-all hover:opacity-90"
-          style={pillGlassStyle}
-        >
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center mr-3" style={iconGlassStyle}>
-            <LayoutDashboard className="w-5 h-5 text-slate-800" />
-          </div>
-          <span className="tracking-wide">Dashboard</span>
-        </Link>
+        {/* Navigation Links */}
+        <div className="flex flex-col space-y-2">
+          {/* Active Dashboard Link */}
+          <Link
+            href="/dashboard"
+            className={`flex items-center px-4 py-3 rounded-2xl text-slate-800 font-semibold text-base transition-all hover:opacity-90 ${pathname === '/dashboard' ? '' : 'opacity-70 hover:opacity-100'}`}
+            style={pathname === '/dashboard' ? pillGlassStyle : {}}
+          >
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center mr-3" style={iconGlassStyle}>
+              <LayoutDashboard className="w-5 h-5 text-slate-800" />
+            </div>
+            <span className="tracking-wide">Dashboard</span>
+          </Link>
+
+          {hasRole('ROLE_HOD') && (
+            <Link
+              href="/dashboard/schedule/set-schedule"
+              className={`flex items-center px-4 py-3 rounded-2xl text-slate-800 font-semibold text-base transition-all hover:opacity-90 ${pathname.includes('/schedule/set-schedule') ? '' : 'opacity-70 hover:opacity-100'}`}
+              style={pathname.includes('/schedule/set-schedule') ? pillGlassStyle : {}}
+            >
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center mr-3" style={iconGlassStyle}>
+                <Calendar className="w-5 h-5 text-slate-800" />
+              </div>
+              <span className="tracking-wide">Set Schedule</span>
+            </Link>
+          )}
+
+          {hasRole('ROLE_STAFF') && (
+            <div className="flex flex-col space-y-1">
+              <button
+                onClick={() => setIsScheduleOpen(!isScheduleOpen)}
+                className="flex items-center justify-between px-4 py-3 rounded-2xl text-slate-800 font-semibold text-base transition-all opacity-70 hover:opacity-100"
+              >
+                <div className="flex items-center">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mr-3" style={iconGlassStyle}>
+                    <Calendar className="w-5 h-5 text-slate-800" />
+                  </div>
+                  <span className="tracking-wide">Schedule</span>
+                </div>
+                <ChevronDown className={`w-4 h-4 transition-transform ${isScheduleOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {isScheduleOpen && (
+                <div className="flex flex-col pl-14 pr-4 space-y-2 mt-1">
+                  <Link
+                    href="/dashboard/schedule/deadline"
+                    className={`text-sm font-medium py-2 px-3 rounded-xl transition-all ${pathname.includes('/schedule/deadline') ? 'bg-white/40 shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white/20'}`}
+                  >
+                    Deadline
+                  </Link>
+                  <Link
+                    href="/dashboard/schedule/meetings"
+                    className={`text-sm font-medium py-2 px-3 rounded-xl transition-all ${pathname.includes('/schedule/meetings') ? 'bg-white/40 shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white/20'}`}
+                  >
+                    Meetings
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* User Profile Footer */}
@@ -75,7 +127,7 @@ export const Sidebar = () => {
           </div>
           <ChevronDown className="w-4 h-4 text-slate-500" />
         </div>
-        <button className="w-9 h-9 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all" style={iconGlassStyle}>
+        <button onClick={logout} className="w-9 h-9 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all" style={iconGlassStyle}>
           <ChevronLeft className="w-4 h-4" />
         </button>
       </div>

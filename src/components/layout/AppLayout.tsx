@@ -4,6 +4,7 @@ import { ReactNode, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Sidebar } from './Sidebar';
+import { Header } from './Header';
 import { ROUTES } from '@/constants/routes';
 
 const BackgroundDecorations = () => (
@@ -76,6 +77,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
       <Sidebar />
 
       <div className="flex flex-col flex-1 w-full pl-72 h-screen overflow-y-auto relative z-10">
+        <Header />
         <main className="flex-1 p-6 md:p-8">
           {children}
         </main>

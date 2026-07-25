@@ -43,14 +43,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsAuthenticated(true);
   }, []);
 
-  const logout = useCallback(() => {
-    removeAccessToken();
-    removeRefreshToken();
-    setUser(null);
-    setIsAuthenticated(false);
-    queryClient.clear();
-    if (typeof window !== 'undefined') {
-      window.location.href = ROUTES.LOGIN;
+  const logout = useCallback(async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout API failed:', error);
+    } finally {
+      removeAccessToken();
+      removeRefreshToken();
+      setUser(null);
+      setIsAuthenticated(false);
+      queryClient.clear();
+      if (typeof window !== 'undefined') {
+        window.location.href = ROUTES.LOGIN;
+      }
     }
   }, [queryClient]);
 
