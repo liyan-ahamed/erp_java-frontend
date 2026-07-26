@@ -1,9 +1,9 @@
-import { Schedule } from '@/types/schedule';
+import { Schedule, HodSchedule } from '@/types/schedule';
 import { useDeleteSchedule } from '@/hooks/useSchedule';
 import { Trash2, Calendar, Clock, User, Tag } from 'lucide-react';
 
 interface ScheduleListProps {
-  schedules: Schedule[];
+  schedules: (Schedule | HodSchedule)[];
   showDelete?: boolean;
 }
 
@@ -20,10 +20,16 @@ export const ScheduleList = ({ schedules, showDelete = false }: ScheduleListProp
 
   return (
     <div className="mt-6 flex flex-col space-y-4">
-      {schedules.map((schedule) => (
+      {schedules.map((schedule) => {
+        const isCompleted = 'completed' in schedule && schedule.completed === true;
+        return (
         <div 
           key={schedule.id}
-          className="p-5 bg-white/60 backdrop-blur-xl rounded-2xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center justify-between transition-all hover:bg-white/70"
+          className={`p-5 backdrop-blur-xl rounded-2xl border shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center justify-between transition-all ${
+            isCompleted 
+              ? 'bg-slate-50/60 border-slate-200/80 hover:bg-slate-50/80 opacity-75' 
+              : 'bg-white/60 border-white/80 hover:bg-white/70'
+          }`}
         >
           <div className="flex flex-col space-y-2">
             <div className="flex items-center space-x-3">
@@ -34,7 +40,14 @@ export const ScheduleList = ({ schedules, showDelete = false }: ScheduleListProp
               }`}>
                 {schedule.schedule_type}
               </span>
-              <h3 className="text-base font-bold text-slate-800">{schedule.title}</h3>
+              {isCompleted && (
+                <span className="text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-200">
+                  Completed
+                </span>
+              )}
+              <h3 className={`text-base font-bold ${isCompleted ? 'text-slate-600 line-through' : 'text-slate-800'}`}>
+                {schedule.title}
+              </h3>
             </div>
             
             <div className="flex items-center space-x-6 mt-2 text-xs font-medium text-slate-500">
@@ -76,7 +89,8 @@ export const ScheduleList = ({ schedules, showDelete = false }: ScheduleListProp
             </button>
           )}
         </div>
-      ))}
+      );
+      })}
     </div>
   );
 };

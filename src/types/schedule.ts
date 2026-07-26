@@ -26,3 +26,7 @@ export interface Schedule {
   created_by_name: string;
   created_at: string;
 }
+
+export interface HodSchedule extends Schedule {
+  completed: boolean;
+}

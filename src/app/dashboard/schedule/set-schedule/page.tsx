@@ -29,6 +29,15 @@ export default function SetSchedulePage() {
   const { data: schedules = [], isLoading: isSchedulesLoading } = useSchedules();
   const { mutate: createSchedule, isPending: isCreating } = useCreateSchedule();
 
+  const [filter, setFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED'>('ALL');
+
+  const filteredSchedules = schedules.filter(schedule => {
+    const isCompleted = 'completed' in schedule && schedule.completed === true;
+    if (filter === 'ACTIVE') return !isCompleted;
+    if (filter === 'COMPLETED') return isCompleted;
+    return true;
+  });
+
   useEffect(() => {
     if (!hasRole('ROLE_HOD')) {
       router.push('/dashboard');
@@ -254,8 +263,36 @@ export default function SetSchedulePage() {
       </div>
 
       <div className="pt-6">
-        <h2 className="text-xl font-bold text-slate-800 mb-2">Created Schedules</h2>
-        <p className="text-slate-500 text-sm font-medium">Manage your created schedules below</p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-slate-800 mb-2">Created Schedules</h2>
+            <p className="text-slate-500 text-sm font-medium">Manage your created schedules below</p>
+          </div>
+          
+          {/* Filter Radio Buttons */}
+          <div className="flex items-center space-x-2 bg-white/50 backdrop-blur-sm p-1.5 rounded-xl border border-slate-200">
+            {['ALL', 'ACTIVE', 'COMPLETED'].map((f) => (
+              <label 
+                key={f}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer transition-all ${
+                  filter === f 
+                    ? 'bg-white shadow-sm text-slate-800 border-slate-200' 
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-white/40'
+                }`}
+              >
+                <input 
+                  type="radio" 
+                  name="schedule-filter"
+                  value={f}
+                  checked={filter === f}
+                  onChange={() => setFilter(f as 'ALL' | 'ACTIVE' | 'COMPLETED')}
+                  className="sr-only"
+                />
+                {f.charAt(0) + f.slice(1).toLowerCase()}
+              </label>
+            ))}
+          </div>
+        </div>
         
         {isSchedulesLoading ? (
           <div className="p-8 text-center text-slate-500 flex flex-col items-center justify-center space-y-3 mt-4">
@@ -263,7 +300,7 @@ export default function SetSchedulePage() {
             <span className="text-sm font-medium">Loading schedules...</span>
           </div>
         ) : (
-          <ScheduleList schedules={schedules} showDelete={true} />
+          <ScheduleList schedules={filteredSchedules} showDelete={true} />
         )}
       </div>
     </div>
