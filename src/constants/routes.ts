@@ -2,5 +2,8 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   DASHBOARD: '/dashboard',
-  // Add other application routes here
+  ATTENDANCE: '/dashboard/attendance',
+  ATTENDANCE_ANALYTICS: '/dashboard/attendance/analytics',
+  NOTIFICATIONS: '/dashboard/notifications',
+  AUDIT_LOG: '/dashboard/audit-log',
 } as const;

@@ -1,5 +1,11 @@
 export const QUERY_KEYS = {
   AUTH: 'auth',
   USER: 'user',
-  // Add other query keys here as modules are developed
+  NOTIFICATIONS: 'notifications',
+  NOTIFICATIONS_UNREAD: 'notificationsUnreadCount',
+  AUDIT_LOGS: 'auditLogs',
+  AUDIT_STATS: 'auditStats',
+  ATTENDANCE: 'attendance',
+  ATTENDANCE_SUMMARY: 'attendanceSummary',
+  ATTENDANCE_ANALYTICS: 'attendanceAnalytics',
 } as const;

@@ -6,7 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useStaffList, useSchedules, useCreateSchedule } from '@/hooks/useSchedule';
 import { ScheduleList } from '@/components/schedule/ScheduleList';
 import { ScheduleType } from '@/types/schedule';
-import { ChevronDown, Search, Check, Loader2 } from 'lucide-react';
+import { ChevronDown, Search, Check, ListTodo } from 'lucide-react';
+import { PageContainer } from '@/components/common/PageContainer';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Spinner } from '@/components/ui/Spinner';
 
 export default function SetSchedulePage() {
   const { hasRole } = useAuth();
@@ -111,198 +116,196 @@ export default function SetSchedulePage() {
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Set Schedule</h1>
-        <p className="text-slate-500 font-medium">Create and manage deadlines or meetings for staff</p>
-      </div>
+    <PageContainer title="Set Schedule" description="Create and manage deadlines or meetings for staff" rawLayout={true}>
+      <div className="space-y-8">
+        
+        {/* Form Container */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Create New Schedule</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Title */}
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-[#666666] uppercase tracking-wide">Title <span className="text-red-500">*</span></label>
+                  <Input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Enter schedule title"
+                    required
+                  />
+                </div>
 
-      <div className="bg-white/40 backdrop-blur-xl rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Title */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Title <span className="text-red-500">*</span></label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter schedule title"
-                className="w-full px-4 py-3 rounded-xl bg-white/50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all placeholder:text-slate-400 font-medium"
-                required
-              />
-            </div>
+                {/* Schedule Type */}
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-[#666666] uppercase tracking-wide">Type <span className="text-red-500">*</span></label>
+                  <select
+                    value={scheduleType}
+                    onChange={(e) => setScheduleType(e.target.value as ScheduleType)}
+                    className="w-full bg-white border border-[#E8E8E8] rounded-lg text-sm text-[#111111] placeholder-[#9A9A9A] focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black px-3 py-2.5 transition-all appearance-none"
+                    required
+                  >
+                    <option value="" disabled>Select type</option>
+                    <option value="DEADLINE">Deadline</option>
+                    <option value="MEETING">Meeting</option>
+                  </select>
+                </div>
 
-            {/* Schedule Type */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Type <span className="text-red-500">*</span></label>
-              <select
-                value={scheduleType}
-                onChange={(e) => setScheduleType(e.target.value as ScheduleType)}
-                className="w-full px-4 py-3 rounded-xl bg-white/50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all text-slate-700 font-medium appearance-none"
-                required
-              >
-                <option value="" disabled>Select type</option>
-                <option value="DEADLINE">Deadline</option>
-                <option value="MEETING">Meeting</option>
-              </select>
-            </div>
+                {/* Date */}
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-[#666666] uppercase tracking-wide">Date <span className="text-red-500">*</span></label>
+                  <Input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    required
+                  />
+                </div>
 
-            {/* Date */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Date <span className="text-red-500">*</span></label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-white/50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all text-slate-700 font-medium"
-                required
-              />
-            </div>
+                {/* Time */}
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-[#666666] uppercase tracking-wide">Time <span className="text-red-500">*</span></label>
+                  <Input
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    required
+                  />
+                </div>
 
-            {/* Time */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Time <span className="text-red-500">*</span></label>
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-white/50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all text-slate-700 font-medium"
-                required
-              />
-            </div>
+                {/* Staff Selection (Multi-select) */}
+                <div className="space-y-1 md:col-span-2 relative" ref={dropdownRef}>
+                  <label className="text-xs font-semibold text-[#666666] uppercase tracking-wide">Assigned Staff <span className="text-red-500">*</span></label>
+                  
+                  <div 
+                    className="w-full bg-white border border-[#E8E8E8] rounded-lg px-3 py-2.5 cursor-pointer flex items-center justify-between transition-colors hover:bg-[#FAFAFA]"
+                    onClick={() => setIsStaffDropdownOpen(!isStaffDropdownOpen)}
+                  >
+                    <span className={`text-sm ${selectedStaffIds.length === 0 ? 'text-[#9A9A9A]' : 'text-[#111111]'}`}>
+                      {selectedStaffIds.length === 0 
+                        ? 'Select staff members' 
+                        : isAllSelected 
+                          ? 'All Staff Selected' 
+                          : `${selectedStaffIds.length} staff member(s) selected`}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-[#9A9A9A] transition-transform ${isStaffDropdownOpen ? 'rotate-180' : ''}`} />
+                  </div>
 
-            {/* Staff Selection (Multi-select) */}
-            <div className="space-y-2 md:col-span-2 relative" ref={dropdownRef}>
-              <label className="text-sm font-semibold text-slate-700">Assigned Staff <span className="text-red-500">*</span></label>
-              
-              <div 
-                className="w-full px-4 py-3 rounded-xl bg-white/50 border border-slate-200 cursor-pointer flex items-center justify-between transition-all hover:bg-white/70"
-                onClick={() => setIsStaffDropdownOpen(!isStaffDropdownOpen)}
-              >
-                <span className={`font-medium ${selectedStaffIds.length === 0 ? 'text-slate-400' : 'text-slate-700'}`}>
-                  {selectedStaffIds.length === 0 
-                    ? 'Select staff members' 
-                    : isAllSelected 
-                      ? 'All Staff Selected' 
-                      : `${selectedStaffIds.length} staff member(s) selected`}
-                </span>
-                <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isStaffDropdownOpen ? 'rotate-180' : ''}`} />
+                  {isStaffDropdownOpen && (
+                    <div className="absolute z-20 w-full mt-2 bg-white rounded-lg shadow-lg border border-[#E8E8E8] overflow-hidden">
+                      <div className="p-3 border-b border-[#F5F5F5] bg-[#FAFAFA]">
+                        <Input
+                          type="text"
+                          placeholder="Search staff..."
+                          value={staffSearchQuery}
+                          onChange={(e) => setStaffSearchQuery(e.target.value)}
+                          icon={<Search className="w-4 h-4" />}
+                        />
+                      </div>
+                      
+                      <div className="max-h-60 overflow-y-auto p-2 space-y-1">
+                        {isStaffLoading ? (
+                          <div className="p-4 text-center text-sm font-medium text-[#9A9A9A]">Loading staff...</div>
+                        ) : (
+                          <>
+                            <div 
+                              className="flex items-center space-x-3 p-2.5 rounded-lg hover:bg-[#FAFAFA] cursor-pointer transition-colors"
+                              onClick={toggleSelectAll}
+                            >
+                              <div className={`w-4 h-4 rounded flex items-center justify-center transition-colors ${isAllSelected ? 'bg-[#111111]' : 'border border-[#D4D4D4] bg-white'}`}>
+                                {isAllSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                              </div>
+                              <span className="font-medium text-[#111111] text-sm">All Staff</span>
+                            </div>
+                            
+                            {filteredStaff.length === 0 ? (
+                              <div className="p-4 text-center text-sm font-medium text-[#9A9A9A]">No staff found</div>
+                            ) : (
+                              filteredStaff.map(staff => (
+                                <div 
+                                  key={staff.id}
+                                  className="flex items-center space-x-3 p-2.5 rounded-lg hover:bg-[#FAFAFA] cursor-pointer transition-colors"
+                                  onClick={() => toggleStaffSelection(staff.id)}
+                                >
+                                  <div className={`w-4 h-4 rounded flex items-center justify-center transition-colors ${selectedStaffIds.includes(staff.id) ? 'bg-[#111111]' : 'border border-[#D4D4D4] bg-white'}`}>
+                                    {selectedStaffIds.includes(staff.id) && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium text-[#111111] text-sm">{staff.name}</span>
+                                    <span className="text-[11px] text-[#666666]">{staff.email}</span>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
               </div>
 
-              {isStaffDropdownOpen && (
-                <div className="absolute z-10 w-full mt-2 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden">
-                  <div className="p-3 border-b border-slate-100 bg-slate-50/50">
-                    <div className="relative">
-                      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <input 
-                        type="text" 
-                        placeholder="Search staff..."
-                        value={staffSearchQuery}
-                        onChange={(e) => setStaffSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="max-h-60 overflow-y-auto p-2 space-y-1">
-                    {isStaffLoading ? (
-                      <div className="p-4 text-center text-sm text-slate-500">Loading staff...</div>
-                    ) : (
-                      <>
-                        <div 
-                          className="flex items-center space-x-3 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
-                          onClick={toggleSelectAll}
-                        >
-                          <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isAllSelected ? 'bg-slate-800 border-slate-800' : 'border-slate-300 bg-white'}`}>
-                            {isAllSelected && <Check className="w-3.5 h-3.5 text-white" />}
-                          </div>
-                          <span className="font-semibold text-slate-700 text-sm">All Staff</span>
-                        </div>
-                        
-                        {filteredStaff.length === 0 ? (
-                          <div className="p-4 text-center text-sm text-slate-500">No staff found</div>
-                        ) : (
-                          filteredStaff.map(staff => (
-                            <div 
-                              key={staff.id}
-                              className="flex items-center space-x-3 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
-                              onClick={() => toggleStaffSelection(staff.id)}
-                            >
-                              <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedStaffIds.includes(staff.id) ? 'bg-slate-800 border-slate-800' : 'border-slate-300 bg-white'}`}>
-                                {selectedStaffIds.includes(staff.id) && <Check className="w-3.5 h-3.5 text-white" />}
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="font-medium text-slate-700 text-sm">{staff.name}</span>
-                                <span className="text-xs text-slate-500">{staff.email}</span>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
+              <div className="pt-6 border-t border-[#F5F5F5] flex justify-end">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  isLoading={isCreating}
+                >
+                  Create Schedule
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Schedule List */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <div className="flex items-center space-x-2">
+              <ListTodo className="w-4 h-4 text-[#9A9A9A]" />
+              <CardTitle className="text-sm font-semibold">Created Schedules</CardTitle>
             </div>
-
-          </div>
-
-          <div className="pt-4 border-t border-slate-100 flex justify-end">
-            <button
-              type="submit"
-              disabled={isCreating}
-              className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center space-x-2"
-            >
-              {isCreating && <Loader2 className="w-4 h-4 animate-spin" />}
-              <span>Create Schedule</span>
-            </button>
-          </div>
-        </form>
+            
+            <div className="flex items-center space-x-1 bg-[#FAFAFA] border border-[#E8E8E8] p-1 rounded-lg">
+              {['ALL', 'ACTIVE', 'COMPLETED'].map((f) => (
+                <label 
+                  key={f}
+                  className={`px-3 py-1 rounded-md text-xs font-semibold tracking-wide cursor-pointer transition-colors ${
+                    filter === f 
+                      ? 'bg-white shadow-sm border border-[#E8E8E8] text-[#111111]' 
+                      : 'text-[#666666] hover:text-[#111111] border border-transparent'
+                  }`}
+                >
+                  <input 
+                    type="radio" 
+                    name="schedule-filter"
+                    value={f}
+                    checked={filter === f}
+                    onChange={() => setFilter(f as 'ALL' | 'ACTIVE' | 'COMPLETED')}
+                    className="sr-only"
+                  />
+                  {f.charAt(0) + f.slice(1).toLowerCase()}
+                </label>
+              ))}
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {isSchedulesLoading ? (
+              <div className="p-12 text-center text-[#9A9A9A] flex flex-col items-center justify-center space-y-4">
+                <Spinner size="lg" />
+                <span className="text-sm font-medium">Loading schedules...</span>
+              </div>
+            ) : (
+              <ScheduleList schedules={filteredSchedules} showDelete={true} />
+            )}
+          </CardContent>
+        </Card>
       </div>
-
-      <div className="pt-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div>
-            <h2 className="text-xl font-bold text-slate-800 mb-2">Created Schedules</h2>
-            <p className="text-slate-500 text-sm font-medium">Manage your created schedules below</p>
-          </div>
-          
-          {/* Filter Radio Buttons */}
-          <div className="flex items-center space-x-2 bg-white/50 backdrop-blur-sm p-1.5 rounded-xl border border-slate-200">
-            {['ALL', 'ACTIVE', 'COMPLETED'].map((f) => (
-              <label 
-                key={f}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer transition-all ${
-                  filter === f 
-                    ? 'bg-white shadow-sm text-slate-800 border-slate-200' 
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-white/40'
-                }`}
-              >
-                <input 
-                  type="radio" 
-                  name="schedule-filter"
-                  value={f}
-                  checked={filter === f}
-                  onChange={() => setFilter(f as 'ALL' | 'ACTIVE' | 'COMPLETED')}
-                  className="sr-only"
-                />
-                {f.charAt(0) + f.slice(1).toLowerCase()}
-              </label>
-            ))}
-          </div>
-        </div>
-        
-        {isSchedulesLoading ? (
-          <div className="p-8 text-center text-slate-500 flex flex-col items-center justify-center space-y-3 mt-4">
-            <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
-            <span className="text-sm font-medium">Loading schedules...</span>
-          </div>
-        ) : (
-          <ScheduleList schedules={filteredSchedules} showDelete={true} />
-        )}
-      </div>
-    </div>
+    </PageContainer>
   );
 }

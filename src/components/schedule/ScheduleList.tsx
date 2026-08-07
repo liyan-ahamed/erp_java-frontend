@@ -1,6 +1,8 @@
 import { Schedule, HodSchedule } from '@/types/schedule';
 import { useDeleteSchedule } from '@/hooks/useSchedule';
 import { Trash2, Calendar, Clock, User, Tag } from 'lucide-react';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
 
 interface ScheduleListProps {
   schedules: (Schedule | HodSchedule)[];
@@ -12,84 +14,82 @@ export const ScheduleList = ({ schedules, showDelete = false }: ScheduleListProp
 
   if (!schedules || schedules.length === 0) {
     return (
-      <div className="p-8 text-center bg-white/50 backdrop-blur-md rounded-2xl border border-white/60 shadow-sm mt-4">
-        <p className="text-slate-500 text-sm">No schedules found.</p>
+      <div className="p-8 text-center mt-4">
+        <p className="text-[#666666] text-sm font-medium">No schedules found.</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-6 flex flex-col space-y-4">
+    <div className="flex flex-col w-full divide-y divide-[#F5F5F5]">
       {schedules.map((schedule) => {
         const isCompleted = 'completed' in schedule && schedule.completed === true;
         return (
-        <div 
-          key={schedule.id}
-          className={`p-5 backdrop-blur-xl rounded-2xl border shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center justify-between transition-all ${
-            isCompleted 
-              ? 'bg-slate-50/60 border-slate-200/80 hover:bg-slate-50/80 opacity-75' 
-              : 'bg-white/60 border-white/80 hover:bg-white/70'
-          }`}
-        >
-          <div className="flex flex-col space-y-2">
-            <div className="flex items-center space-x-3">
-              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
-                schedule.schedule_type === 'DEADLINE' 
-                  ? 'bg-rose-100 text-rose-700 border border-rose-200' 
-                  : 'bg-blue-100 text-blue-700 border border-blue-200'
-              }`}>
-                {schedule.schedule_type}
-              </span>
-              {isCompleted && (
-                <span className="text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-200">
-                  Completed
-                </span>
-              )}
-              <h3 className={`text-base font-bold ${isCompleted ? 'text-slate-600 line-through' : 'text-slate-800'}`}>
-                {schedule.title}
-              </h3>
-            </div>
-            
-            <div className="flex items-center space-x-6 mt-2 text-xs font-medium text-slate-500">
-              <div className="flex items-center space-x-1.5">
-                <Calendar className="w-4 h-4 text-slate-400" />
-                <span>{schedule.schedule_date}</span>
+          <div 
+            key={schedule.id}
+            className={`p-4 md:px-6 md:py-4 flex flex-col md:flex-row md:items-center justify-between transition-colors hover:bg-[#FAFAFA] ${
+              isCompleted ? 'opacity-70' : ''
+            }`}
+          >
+            <div className="flex flex-col space-y-2.5">
+              <div className="flex items-center space-x-3">
+                <Badge variant={schedule.schedule_type === 'DEADLINE' ? 'error' : 'info'}>
+                  {schedule.schedule_type}
+                </Badge>
+                {isCompleted && (
+                  <Badge variant="success">
+                    Completed
+                  </Badge>
+                )}
+                <h3 className={`text-sm font-semibold ${isCompleted ? 'text-[#9A9A9A] line-through' : 'text-[#111111]'}`}>
+                  {schedule.title}
+                </h3>
               </div>
-              <div className="flex items-center space-x-1.5">
-                <Clock className="w-4 h-4 text-slate-400" />
-                <span>{schedule.schedule_time}</span>
+              
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-[#666666]">
+                <div className="flex items-center space-x-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-[#9A9A9A]" />
+                  <span>{schedule.schedule_date}</span>
+                </div>
+                <div className="flex items-center space-x-1.5">
+                  <Clock className="w-3.5 h-3.5 text-[#9A9A9A]" />
+                  <span>{schedule.schedule_time}</span>
+                </div>
+                {schedule.staff_name && (
+                  <div className="flex items-center space-x-1.5">
+                    <User className="w-3.5 h-3.5 text-[#9A9A9A]" />
+                    <span>{schedule.staff_name}</span>
+                  </div>
+                )}
+                {schedule.created_by_name && (
+                  <div className="flex items-center space-x-1.5">
+                    <Tag className="w-3.5 h-3.5 text-[#9A9A9A]" />
+                    <span>Created by: {schedule.created_by_name}</span>
+                  </div>
+                )}
               </div>
-              {schedule.staff_name && (
-                <div className="flex items-center space-x-1.5">
-                  <User className="w-4 h-4 text-slate-400" />
-                  <span>Assigned to: {schedule.staff_name}</span>
-                </div>
-              )}
-              {schedule.created_by_name && (
-                <div className="flex items-center space-x-1.5">
-                  <Tag className="w-4 h-4 text-slate-400" />
-                  <span>Created by: {schedule.created_by_name}</span>
-                </div>
-              )}
             </div>
-          </div>
 
-          {showDelete && (
-            <button
-              onClick={() => {
-                if (window.confirm('Are you sure you want to delete this schedule?')) {
-                  deleteSchedule(schedule.id);
-                }
-              }}
-              disabled={isPending}
-              className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors border border-red-100 disabled:opacity-50"
-              title="Delete Schedule"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
-          )}
-        </div>
-      );
+            {showDelete && (
+              <div className="mt-4 md:mt-0 flex items-center justify-end md:pl-5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete this schedule?')) {
+                      deleteSchedule(schedule.id);
+                    }
+                  }}
+                  disabled={isPending}
+                  className="text-[#9A9A9A] hover:text-red-600 hover:bg-red-50 px-2"
+                  title="Delete Schedule"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        );
       })}
     </div>
   );
