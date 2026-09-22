@@ -2,7 +2,9 @@
 
 import { PageContainer } from '@/components/common/PageContainer';
 import { useDashboardSummary } from '@/hooks/useDashboardQuery';
-import { useAttendanceSummary } from '@/hooks/useAttendance';
+// Attendance module temporarily disabled:
+// import { useAttendanceSummary } from '@/hooks/useAttendance';
+import type { AttendanceSummary } from '@/types/attendance';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { useAuditStats } from '@/hooks/useAuditLogs';
 import { Users, Calendar, Grid, GraduationCap, Clock, Bell, Shield, AlertTriangle, UserCheck, UserX, BarChart3, Laptop } from 'lucide-react';
@@ -13,7 +15,8 @@ import { Spinner } from '@/components/ui/Spinner';
 
 export default function DashboardPage() {
   const { data, isLoading, isError, error } = useDashboardSummary();
-  const { data: attendanceSummary } = useAttendanceSummary();
+  // const { data: attendanceSummary } = useAttendanceSummary();
+  const attendanceSummary: AttendanceSummary | undefined = undefined;
   const { data: unreadCount } = useUnreadCount();
   const { data: auditStats } = useAuditStats();
 
@@ -57,8 +60,9 @@ export default function DashboardPage() {
           value={data?.total_staff?.toLocaleString() ?? 0}
           icon={<Users className="w-5 h-5" />}
         />
-        {/* Attendance KPIs */}
-        <MetricCard 
+        {/* Attendance KPIs temporarily disabled. */}
+        {false && <>
+        <MetricCard
           title="Present Today" 
           value={attendanceSummary?.present ?? 0}
           icon={<UserCheck className="w-5 h-5" />}
@@ -70,11 +74,14 @@ export default function DashboardPage() {
           icon={<BarChart3 className="w-5 h-5" />}
           trend={{ value: 2.1, isPositive: true }}
         />
+        </>}
       </div>
 
       {/* Second row: Attendance + Notifications + Audit */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <MetricCard 
+        {/* Attendance status cards temporarily disabled. */}
+        {false && <>
+        <MetricCard
           title="Absent Today" 
           value={attendanceSummary?.absent ?? 0}
           icon={<UserX className="w-5 h-5" />}
@@ -84,6 +91,7 @@ export default function DashboardPage() {
           value={attendanceSummary?.late ?? 0}
           icon={<AlertTriangle className="w-5 h-5" />}
         />
+        </>}
         <MetricCard 
           title="Unread Notifications" 
           value={unreadCount ?? 0}

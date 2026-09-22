@@ -12,6 +12,8 @@ import { Spinner } from '@/components/ui/Spinner';
 import { useEmployeeAttendance } from '@/hooks/useAttendance';
 import { AttendanceStatus } from '@/types/attendance';
 import { ArrowLeft, BarChart3, Clock, AlertTriangle, Coffee, TrendingUp, Calendar } from 'lucide-react';
+import { notFound } from 'next/navigation';
+import { isAttendanceEnabled } from '@/lib/feature-flags';
 
 const statusBadge: Record<AttendanceStatus, { variant: 'success' | 'error' | 'warning' | 'info' | 'default' | 'outline'; label: string }> = {
   PRESENT: { variant: 'success', label: 'Present' },
@@ -36,6 +38,9 @@ const statusColor: Record<AttendanceStatus, string> = {
 };
 
 export default function EmployeeAttendancePage({ params }: { params: Promise<{ id: string }> }) {
+  // Attendance is temporarily disabled. Remove this guard to restore the page.
+  if (!isAttendanceEnabled()) notFound();
+
   const { id } = use(params);
   const employeeId = parseInt(id, 10);
   const { data: profile, isLoading } = useEmployeeAttendance(employeeId);

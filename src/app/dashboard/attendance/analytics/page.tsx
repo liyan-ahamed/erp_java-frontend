@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAttendanceAnalytics } from '@/hooks/useAttendance';
 import { TrendingUp, BarChart3, Clock, Users, PieChart, Laptop } from 'lucide-react';
+import { notFound } from 'next/navigation';
+import { isAttendanceEnabled } from '@/lib/feature-flags';
 
 // Simple inline bar chart component
 const BarChart = ({ data, labelKey, valueKey, maxValue, color = '#111111' }: {
@@ -81,6 +83,9 @@ const SparkLine = ({ data, height = 60 }: { data: number[]; height?: number }) =
 };
 
 export default function AttendanceAnalyticsPage() {
+  // Attendance is temporarily disabled. Remove this guard to restore the page.
+  if (!isAttendanceEnabled()) notFound();
+
   const { data: analytics, isLoading } = useAttendanceAnalytics();
 
   if (isLoading || !analytics) {

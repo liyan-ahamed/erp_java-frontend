@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, ReactNode, useCallback } from 'react';
-import { AuthContext, User } from '@/contexts/auth-context';
+import { AppRole, AuthContext, User } from '@/contexts/auth-context';
 import { getAccessToken, setAccessToken, setRefreshToken, removeAccessToken, removeRefreshToken } from '@/utils/token';
 import { authService } from '@/services/auth/auth.service';
 import { ROUTES } from '@/constants/routes';
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [queryClient]);
 
-  const hasRole = useCallback((role: "ROLE_HOD" | "ROLE_STAFF") => {
+  const hasRole = useCallback((role: AppRole) => {
     return user?.roles?.includes(role) ?? false;
   }, [user]);
 

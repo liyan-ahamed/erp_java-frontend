@@ -14,6 +14,8 @@ import { useAttendanceSummary, useAttendanceRecords } from '@/hooks/useAttendanc
 import { AttendanceFilters, AttendanceStatus } from '@/types/attendance';
 import { DEPARTMENTS, ATTENDANCE_STATUSES } from '@/data/attendance-data';
 import { Search, Users, UserX, Clock, AlertTriangle, Coffee, Laptop, ChevronLeft, ChevronRight, BarChart3, User } from 'lucide-react';
+import { notFound } from 'next/navigation';
+import { isAttendanceEnabled } from '@/lib/feature-flags';
 
 const statusBadge: Record<AttendanceStatus, { variant: 'success' | 'error' | 'warning' | 'info' | 'default' | 'outline'; label: string }> = {
   PRESENT: { variant: 'success', label: 'Present' },
@@ -27,6 +29,9 @@ const statusBadge: Record<AttendanceStatus, { variant: 'success' | 'error' | 'wa
 };
 
 export default function AttendancePage() {
+  // Attendance is temporarily disabled. Remove this guard to restore the page.
+  if (!isAttendanceEnabled()) notFound();
+
   const [filters, setFilters] = useState<AttendanceFilters>({
     search: '',
     department: '',

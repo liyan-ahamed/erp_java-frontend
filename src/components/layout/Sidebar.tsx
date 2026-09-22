@@ -9,7 +9,7 @@ import { LayoutDashboard, GraduationCap, ChevronDown, ChevronLeft, Calendar, Clo
 export const Sidebar = () => {
   const { user, hasRole, logout } = useAuth();
   const pathname = usePathname();
-  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(pathname.includes('/schedule'));
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(
     pathname.includes('/attendance')
   );
@@ -49,8 +49,9 @@ export const Sidebar = () => {
             <span className="tracking-wide">Dashboard</span>
           </Link>
 
-          {/* Attendance (expandable) */}
-          <div className="flex flex-col space-y-1">
+          {/* Attendance is temporarily disabled for every role. Change this
+              guard back when the module is restored. */}
+          {false && <div className="flex flex-col space-y-1">
             <button
               onClick={() => setIsAttendanceOpen(!isAttendanceOpen)}
               className={`flex items-center justify-between px-3 py-2.5 rounded-[10px] font-medium text-sm transition-colors w-full ${
@@ -94,29 +95,13 @@ export const Sidebar = () => {
                 </Link>
               </div>
             )}
-          </div>
+          </div>}
 
-          {/* HOD: Set Schedule */}
-          {hasRole('ROLE_HOD') && (
-            <Link
-              href="/dashboard/schedule/set-schedule"
-              className={`flex items-center px-3 py-2.5 rounded-[10px] font-medium text-sm transition-colors ${
-                pathname.includes('/schedule/set-schedule')
-                  ? 'bg-[#FAFAFA] text-[#111111]'
-                  : 'text-[#666666] hover:bg-[#FAFAFA] hover:text-[#111111]'
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors ${
-                pathname.includes('/schedule/set-schedule') ? 'text-[#111111]' : 'text-[#666666]'
-              }`}>
-                <Calendar className="w-5 h-5" />
-              </div>
-              <span className="tracking-wide">Set Schedule</span>
-            </Link>
-          )}
+          {/* Legacy HOD -> Staff Set Schedule link retained for restoration:
+              <Link href="/dashboard/schedule/set-schedule">Set Schedule</Link> */}
 
-          {/* STAFF: Schedule submenu */}
-          {hasRole('ROLE_STAFF') && (
+          {/* Schedule is available to HOD, Staff, and Student. */}
+          {(hasRole('ROLE_HOD') || hasRole('ROLE_STAFF') || hasRole('ROLE_STUDENT')) && (
             <div className="flex flex-col space-y-1">
               <button
                 onClick={() => setIsScheduleOpen(!isScheduleOpen)}
@@ -141,17 +126,17 @@ export const Sidebar = () => {
                         : 'text-[#666666] hover:text-[#111111] hover:bg-[#FAFAFA]'
                     }`}
                   >
-                    Deadline
+                    {hasRole('ROLE_STAFF') ? 'Set Deadline' : 'View Deadline'}
                   </Link>
                   <Link
-                    href="/dashboard/schedule/meetings"
+                    href="/dashboard/schedule/poll"
                     className={`text-sm font-medium py-2 px-3 rounded-lg transition-colors ${
-                      pathname.includes('/schedule/meetings') 
+                      pathname.includes('/schedule/poll') 
                         ? 'text-[#111111] bg-[#FAFAFA]' 
                         : 'text-[#666666] hover:text-[#111111] hover:bg-[#FAFAFA]'
                     }`}
                   >
-                    Meetings
+                    {hasRole('ROLE_STAFF') ? 'Set Poll' : 'View Poll'}
                   </Link>
                 </div>
               )}

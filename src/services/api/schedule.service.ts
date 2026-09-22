@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/axios';
-import { CreateSchedulePayload, Schedule, Staff } from '@/types/schedule';
+import { CreateSchedulePayload, CreateStudentSchedulePayload, Schedule, ScheduleAudience, Staff, StudentSchedule, StudentScheduleType } from '@/types/schedule';
 import { removeAccessToken, removeRefreshToken } from '@/utils/token';
 import { ROUTES } from '@/constants/routes';
 
@@ -17,6 +17,30 @@ const handleApiError = (response: any) => {
 };
 
 export const scheduleService = {
+  getAudience: async (): Promise<ScheduleAudience> => {
+    const response = await apiClient.get('/student-schedules/audience');
+    handleApiError(response);
+    return response.data.data;
+  },
+
+  createStudentSchedule: async (payload: CreateStudentSchedulePayload): Promise<StudentSchedule> => {
+    const response = await apiClient.post('/student-schedules', payload);
+    handleApiError(response);
+    return response.data.data;
+  },
+
+  getStudentSchedules: async (type: StudentScheduleType): Promise<StudentSchedule[]> => {
+    const response = await apiClient.get('/student-schedules', { params: { type } });
+    handleApiError(response);
+    return response.data.data;
+  },
+
+  submitPollResponse: async (pollId: number, optionIndex: number): Promise<StudentSchedule> => {
+    const response = await apiClient.post(`/student-schedules/${pollId}/response`, { option_index: optionIndex });
+    handleApiError(response);
+    return response.data.data;
+  },
+
   getStaff: async (): Promise<Staff[]> => {
     const response = await apiClient.get('/schedules/staff');
     handleApiError(response);

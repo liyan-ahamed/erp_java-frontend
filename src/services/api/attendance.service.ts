@@ -8,6 +8,9 @@ import {
 } from '@/data/attendance-data';
 import { PaginatedResponse } from '@/types/api';
 
+// Temporarily disabled. Kept intact so Attendance can be restored without
+// recreating its API/mock-data layer. There are currently no active callers.
+
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const attendanceService = {

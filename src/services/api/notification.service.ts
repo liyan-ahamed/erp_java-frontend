@@ -1,11 +1,9 @@
 import { Notification, NotificationFilters } from '@/types/notification';
-import { mockNotifications } from '@/data/notification-data';
 import { PaginatedResponse } from '@/types/api';
+import { apiClient } from '@/lib/axios';
 
 // Mock-based service — structured for easy API replacement
-// When backend endpoints are ready, replace mock calls with apiClient calls
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// The existing Notification API now supplies persisted reminders and messages.
 
 const applyFilters = (notifications: Notification[], filters: NotificationFilters): Notification[] => {
   let result = [...notifications];
@@ -45,61 +43,55 @@ const applyFilters = (notifications: Notification[], filters: NotificationFilter
   return result;
 };
 
-// In-memory state for mutations
-let notifications = [...mockNotifications];
+const archivedIds = new Set<number>();
+
+interface BackendPage {
+  content: Notification[];
+  page: number;
+  size: number;
+  total_elements: number;
+  total_pages: number;
+}
 
 export const notificationService = {
   getNotifications: async (filters: NotificationFilters = {}): Promise<PaginatedResponse<Notification>> => {
-    await delay(300);
-    const filtered = applyFilters(notifications.filter(n => !n.is_archived), filters);
     const page = filters.page || 0;
     const size = filters.size || 10;
-    const start = page * size;
-    const content = filtered.slice(start, start + size);
+    const isRead = filters.status === 'read' ? true : filters.status === 'unread' ? false : undefined;
+    const response = await apiClient.get('/notifications', { params: { page, size, isRead } });
+    const backend = response.data.data as BackendPage;
+    const content = applyFilters(backend.content
+      .filter(item => !archivedIds.has(item.id))
+      .map(item => ({ ...item, category: item.reference_type === 'POLL' ? 'REMINDER' : item.category })), filters);
 
     return {
       content,
-      totalElements: filtered.length,
-      totalPages: Math.ceil(filtered.length / size),
-      size,
-      number: page,
+      totalElements: backend.total_elements,
+      totalPages: backend.total_pages,
+      size: backend.size,
+      number: backend.page,
     };
   },
 
   getUnreadCount: async (): Promise<number> => {
-    await delay(100);
-    return notifications.filter(n => !n.is_read && !n.is_archived).length;
+    const response = await apiClient.get('/notifications/unread-count');
+    return response.data.data.count;
   },
 
   markAsRead: async (id: number): Promise<void> => {
-    await delay(200);
-    const n = notifications.find(n => n.id === id);
-    if (n) {
-      n.is_read = true;
-      n.read_at = new Date().toISOString();
-    }
+    await apiClient.patch(`/notifications/${id}/read`);
   },
 
   markAllAsRead: async (): Promise<void> => {
-    await delay(300);
-    notifications.forEach(n => {
-      if (!n.is_read) {
-        n.is_read = true;
-        n.read_at = new Date().toISOString();
-      }
-    });
+    await apiClient.patch('/notifications/read-all');
   },
 
   deleteNotification: async (id: number): Promise<void> => {
-    await delay(200);
-    notifications = notifications.filter(n => n.id !== id);
+    await apiClient.delete(`/notifications/${id}`);
   },
 
   archiveNotification: async (id: number): Promise<void> => {
-    await delay(200);
-    const n = notifications.find(n => n.id === id);
-    if (n) {
-      n.is_archived = true;
-    }
+    // The backend has no archive field; preserve the existing session-only behavior.
+    archivedIds.add(id);
   },
 };

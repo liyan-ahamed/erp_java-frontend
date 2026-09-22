@@ -10,9 +10,11 @@ export interface User {
   staff_code: string;
   phone: string;
   designation: string;
-  roles: ("ROLE_HOD" | "ROLE_STAFF")[];
+  roles: AppRole[];
   is_active: boolean;
 }
+
+export type AppRole = "ROLE_HOD" | "ROLE_STAFF" | "ROLE_STUDENT";
 
 export interface AuthContextType {
   user: User | null;
@@ -20,7 +22,7 @@ export interface AuthContextType {
   isLoading: boolean;
   login: (accessToken: string, refreshToken: string, userData: User) => void;
   logout: () => void;
-  hasRole: (role: "ROLE_HOD" | "ROLE_STAFF") => boolean;
+  hasRole: (role: AppRole) => boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

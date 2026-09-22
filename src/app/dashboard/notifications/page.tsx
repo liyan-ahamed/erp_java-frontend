@@ -11,6 +11,7 @@ import { useNotifications, useUnreadCount, useMarkAsRead, useMarkAllAsRead, useD
 import { NotificationFilters, NotificationCategory, NotificationPriority, Notification } from '@/types/notification';
 import { categoryLabels, NOTIFICATION_CATEGORIES } from '@/data/notification-data';
 import { Search, Bell, Check, CheckCheck, Trash2, Archive, X, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const priorityBadge = (priority: NotificationPriority) => {
   const map: Record<NotificationPriority, { variant: 'error' | 'warning' | 'info' | 'default'; label: string }> = {
@@ -35,6 +36,7 @@ const timeAgo = (dateStr: string): string => {
 };
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const [filters, setFilters] = useState<NotificationFilters>({
     search: '',
     category: '',
@@ -414,6 +416,11 @@ export default function NotificationsPage() {
                 </div>
 
                 <div className="flex gap-2 pt-2">
+                  {detailNotification.reference_type === 'POLL' && detailNotification.reference_id && (
+                    <Button size="sm" onClick={() => router.push(`/dashboard/schedule/poll#poll-${detailNotification.reference_id}`)}>
+                      Open Poll
+                    </Button>
+                  )}
                   {!detailNotification.is_read && (
                     <Button variant="secondary" size="sm" onClick={() => markAsRead.mutate(detailNotification.id)} className="flex-1">
                       <Check className="w-3.5 h-3.5 mr-1.5" /> Mark Read

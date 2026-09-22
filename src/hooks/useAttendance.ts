@@ -2,6 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { attendanceService } from '@/services/api/attendance.service';
 import { AttendanceFilters } from '@/types/attendance';
 
+// Temporarily disabled: Attendance pages are guarded with notFound(), the
+// dashboard no longer calls these hooks, and no Attendance API calls execute.
+
 const KEYS = {
   attendanceSummary: 'attendanceSummary',
   attendanceRecords: 'attendanceRecords',
