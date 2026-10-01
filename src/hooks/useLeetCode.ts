@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { leetcodeService } from '@/services/api/leetcode.service';
 import { QUERY_KEYS } from '@/constants/query-keys';
-import { LeetCodeYear } from '@/types/leetcode';
+import { LeetCodeUrlUpdate, LeetCodeYear } from '@/types/leetcode';
 
 // LeetCode is only queried when the user clicks Fetch Data, so these queries
 // opt out of any background refetching configured on the shared query client.
@@ -20,10 +20,35 @@ export const useLeetCodeFilters = (enabled = true) =>
   });
 
 /** Fetches one year/section from LeetCode (via the ERP backend) on demand. */
-export const useFetchLeetCodeSection = () =>
-  useMutation({
+export const useFetchLeetCodeSection = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
     mutationFn: ({ year, section }: { year: LeetCodeYear; section: string }) =>
       leetcodeService.fetchSectionStats(year, section),
+    // Fresh statistics can change the year's ranking.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LEETCODE_TOP] }),
+  });
+};
+
+/**
+ * The year's top solvers, 10 per request. Loads nothing until a year is given;
+ * fetchNextPage brings the next 10.
+ */
+export const useLeetCodeTop = (year: LeetCodeYear | null) =>
+  useInfiniteQuery({
+    queryKey: [QUERY_KEYS.LEETCODE_TOP, year],
+    queryFn: ({ pageParam }) => leetcodeService.getTopByYear(year as LeetCodeYear, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    enabled: year !== null,
+    ...NO_BACKGROUND_REFETCH,
+  });
+
+/** Saves edited LeetCode profile URLs for one year/section. */
+export const useUpdateLeetCodeUrls = () =>
+  useMutation({
+    mutationFn: ({ year, section, students }: { year: LeetCodeYear; section: string; students: LeetCodeUrlUpdate[] }) =>
+      leetcodeService.updateProfileUrls(year, section, students),
   });
 
 /** The logged-in student's stored profile; reads the ERP database only. */

@@ -1,6 +1,13 @@
 import { apiClient } from '@/lib/axios';
 import { API_ENDPOINTS } from '@/constants/api';
-import { LeetCodeFilters, LeetCodeSectionStats, LeetCodeStudentStats, LeetCodeYear } from '@/types/leetcode';
+import {
+  LeetCodeFilters,
+  LeetCodeSectionStats,
+  LeetCodeStudentStats,
+  LeetCodeTopPage,
+  LeetCodeUrlUpdate,
+  LeetCodeYear,
+} from '@/types/leetcode';
 import { removeAccessToken, removeRefreshToken } from '@/utils/token';
 import { ROUTES } from '@/constants/routes';
 
@@ -33,6 +40,20 @@ export const leetcodeService = {
       params: { year, section },
       timeout: SYNC_TIMEOUT_MS,
     });
+    handleApiError(response);
+    return response.data.data;
+  },
+
+  /** One page of the year's top solvers (always 10 per page), from stored statistics. */
+  getTopByYear: async (year: LeetCodeYear, page: number): Promise<LeetCodeTopPage> => {
+    const response = await apiClient.get(API_ENDPOINTS.LEETCODE.TOP, { params: { year, page } });
+    handleApiError(response);
+    return response.data.data;
+  },
+
+  /** Saves edited profile URLs for students of one year/section; returns how many changed. */
+  updateProfileUrls: async (year: LeetCodeYear, section: string, students: LeetCodeUrlUpdate[]): Promise<number> => {
+    const response = await apiClient.put(API_ENDPOINTS.LEETCODE.PROFILE_URLS, { year, section, students });
     handleApiError(response);
     return response.data.data;
   },

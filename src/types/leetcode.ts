@@ -28,6 +28,32 @@ export interface LeetCodeStudentStats {
   message: string | null;
 }
 
+export interface LeetCodeRankedStudent {
+  rank: number;
+  studentId: number;
+  name: string;
+  section: string;
+  totalSolved: number;
+  easySolved: number | null;
+  mediumSolved: number | null;
+  hardSolved: number | null;
+  lastSyncedAt: string | null;
+}
+
+/** One page (10 students) of a year's ranking. */
+export interface LeetCodeTopPage {
+  year: LeetCodeYear;
+  page: number;
+  totalRanked: number;
+  hasMore: boolean;
+  students: LeetCodeRankedStudent[];
+}
+
+export interface LeetCodeUrlUpdate {
+  studentId: number;
+  profileUrl: string;
+}
+
 export interface LeetCodeSectionStats {
   year: LeetCodeYear;
   section: string;

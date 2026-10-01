@@ -20,5 +20,7 @@ export const API_ENDPOINTS = {
     STATS: '/leetcode/stats',
     ME: '/leetcode/me',
     ME_STATS: '/leetcode/me/stats',
+    PROFILE_URLS: '/leetcode/profile-urls',
+    TOP: '/leetcode/top',
   },
 } as const;

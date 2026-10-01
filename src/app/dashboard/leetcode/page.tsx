@@ -2,15 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ExternalLink, RefreshCw } from 'lucide-react';
+import { Check, ExternalLink, Pencil, RefreshCw, Trophy } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import {
   useFetchLeetCodeSection,
   useFetchMyLeetCodeStats,
   useLeetCodeFilters,
+  useLeetCodeTop,
   useMyLeetCodeProfile,
+  useUpdateLeetCodeUrls,
 } from '@/hooks/useLeetCode';
-import { LeetCodeStudentStats, LeetCodeSyncStatus, LeetCodeYear, URL_NOT_PROVIDED } from '@/types/leetcode';
+import {
+  LeetCodeStudentStats,
+  LeetCodeSyncStatus,
+  LeetCodeUrlUpdate,
+  LeetCodeYear,
+  URL_NOT_PROVIDED,
+} from '@/types/leetcode';
+import { Input } from '@/components/ui/Input';
 import { PageContainer } from '@/components/common/PageContainer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
@@ -37,6 +46,10 @@ const errorMessage = (error: unknown, fallback: string) => {
 const formatSynced = (value: string | null) => (value ? new Date(value).toLocaleString() : 'Never');
 
 const formatCount = (value: number | null) => (value === null || value === undefined ? '—' : value);
+
+/** The editable form of a stored URL: blank when no URL is on record. */
+const editableUrl = (student: LeetCodeStudentStats) =>
+  student.profileUrl === URL_NOT_PROVIDED ? '' : student.profileUrl;
 
 function ProfileLink({ student }: { student: LeetCodeStudentStats }) {
   if (student.profileUrl === URL_NOT_PROVIDED) {
@@ -69,8 +82,17 @@ function StatusBadge({ student }: { student: LeetCodeStudentStats }) {
 function SectionStatsView() {
   const { data: filters, isLoading: filtersLoading, isError: filtersError } = useLeetCodeFilters();
   const fetchSection = useFetchLeetCodeSection();
+  const updateUrls = useUpdateLeetCodeUrls();
   const [year, setYear] = useState<LeetCodeYear | ''>('');
   const [section, setSection] = useState('');
+  // Draft URLs by student id; non-null while the results table is in edit mode.
+  const [drafts, setDrafts] = useState<Record<number, string> | null>(null);
+  const isEditing = drafts !== null;
+  // Year whose Top Count is shown; null until the Top Count button is pressed.
+  const [topYear, setTopYear] = useState<LeetCodeYear | null>(null);
+  const top = useLeetCodeTop(topYear);
+  const topStudents = top.data?.pages.flatMap((page) => page.students) ?? [];
+  const totalRanked = top.data?.pages[0]?.totalRanked ?? 0;
 
   const sections = filters?.years.find((option) => option.value === year)?.sections ?? [];
   const result = fetchSection.data;
@@ -78,6 +100,7 @@ function SectionStatsView() {
   const onYearChange = (value: string) => {
     setYear(value as LeetCodeYear | '');
     setSection('');
+    setTopYear(null);
     fetchSection.reset();
   };
 
@@ -91,6 +114,43 @@ function SectionStatsView() {
     fetchSection.mutate({ year, section });
   };
 
+  const onTopCount = () => {
+    if (!year) return;
+    if (topYear === year) {
+      top.refetch();
+    } else {
+      setTopYear(year);
+    }
+  };
+
+  const onEdit = () => {
+    if (!result) return;
+    updateUrls.reset();
+    setDrafts(Object.fromEntries(result.students.map((s) => [s.studentId, editableUrl(s)])));
+  };
+
+  /** DONE: save changed URLs, leave edit mode, then fetch the section again. */
+  const onDone = () => {
+    if (!result || !drafts) return;
+    const changes: LeetCodeUrlUpdate[] = result.students
+      .filter((s) => (drafts[s.studentId] ?? '').trim() !== editableUrl(s).trim())
+      .map((s) => ({ studentId: s.studentId, profileUrl: (drafts[s.studentId] ?? '').trim() }));
+    if (changes.length === 0) {
+      setDrafts(null);
+      return;
+    }
+    const target = { year: result.year, section: result.section };
+    updateUrls.mutate(
+      { ...target, students: changes },
+      {
+        onSuccess: () => {
+          setDrafts(null);
+          fetchSection.mutate(target);
+        },
+      },
+    );
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -102,7 +162,7 @@ function SectionStatsView() {
                 id="leetcode-year"
                 value={year}
                 onChange={(e) => onYearChange(e.target.value)}
-                disabled={filtersLoading || fetchSection.isPending}
+                disabled={filtersLoading || fetchSection.isPending || isEditing}
                 className={SELECT_CLASS}
               >
                 <option value="">Select year</option>
@@ -117,7 +177,7 @@ function SectionStatsView() {
                 id="leetcode-section"
                 value={section}
                 onChange={(e) => onSectionChange(e.target.value)}
-                disabled={!year || fetchSection.isPending}
+                disabled={!year || fetchSection.isPending || isEditing}
                 className={SELECT_CLASS}
               >
                 <option value="">{year ? 'Select section' : 'Select a year first'}</option>
@@ -126,9 +186,13 @@ function SectionStatsView() {
                 ))}
               </select>
             </div>
-            <Button onClick={onFetch} disabled={!year || !section} isLoading={fetchSection.isPending}>
+            <Button onClick={onFetch} disabled={!year || !section || isEditing} isLoading={fetchSection.isPending}>
               {!fetchSection.isPending && <RefreshCw className="w-4 h-4 mr-2" />}
               {fetchSection.isPending ? 'Fetching...' : 'Fetch Data'}
+            </Button>
+            <Button variant="outline" onClick={onTopCount} disabled={!year} isLoading={top.isFetching && !top.isFetchingNextPage}>
+              {!(top.isFetching && !top.isFetchingNextPage) && <Trophy className="w-4 h-4 mr-2" />}
+              Top Count
             </Button>
           </div>
           {filtersError && <p className="mt-4 text-sm text-red-600">Unable to load years and sections.</p>}
@@ -145,15 +209,99 @@ function SectionStatsView() {
         </CardContent>
       </Card>
 
-      {result && (
+      {topYear && (
         <Card>
           <CardHeader>
             <CardTitle>
-              {filters?.years.find((option) => option.value === result.year)?.label ?? result.year} — Section {result.section}
+              Top Count — {filters?.years.find((option) => option.value === topYear)?.label ?? topYear}
             </CardTitle>
             <CardDescription>
-              {result.totalStudents} students · {result.synced} synced · {result.failed} unavailable · {result.urlNotProvided} without a profile URL
+              Ranked by total problems solved, using the statistics saved at each section&apos;s last Fetch Data.
             </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {top.isPending ? (
+              <div className="p-8 flex justify-center">
+                <Spinner size="lg" />
+              </div>
+            ) : top.isError ? (
+              <p className="p-8 text-center text-sm text-red-600">
+                {errorMessage(top.error, 'Unable to load the top count.')}
+              </p>
+            ) : topStudents.length === 0 ? (
+              <p className="p-8 text-center text-sm text-[#666666]">
+                No LeetCode statistics saved for this year yet. Fetch Data for a section first.
+              </p>
+            ) : (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-16">Rank</TableHead>
+                      <TableHead>Student Name</TableHead>
+                      <TableHead>Section</TableHead>
+                      <TableHead className="text-right">Total Solved</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {topStudents.map((student) => (
+                      <TableRow key={student.studentId}>
+                        <TableCell className="font-semibold">#{student.rank}</TableCell>
+                        <TableCell className="font-medium">{student.name}</TableCell>
+                        <TableCell className="text-[#666666]">Section {student.section}</TableCell>
+                        <TableCell className="text-right font-semibold">{student.totalSolved}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <div className="flex items-center justify-between gap-4 px-6 py-4 border-t border-[#E8E8E8]">
+                  <span className="text-sm text-[#666666]">
+                    Showing {topStudents.length} of {totalRanked}
+                  </span>
+                  {top.hasNextPage && (
+                    <Button variant="outline" size="sm" onClick={() => top.fetchNextPage()} isLoading={top.isFetchingNextPage}>
+                      {top.isFetchingNextPage ? 'Loading...' : 'Show next 10'}
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {result && (
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-1.5">
+                <CardTitle>
+                  {filters?.years.find((option) => option.value === result.year)?.label ?? result.year} — Section {result.section}
+                </CardTitle>
+                <CardDescription>
+                  {isEditing
+                    ? 'Add or correct LeetCode URLs, then click DONE to save and fetch the latest statistics.'
+                    : `${result.totalStudents} students · ${result.synced} synced · ${result.failed} unavailable · ${result.urlNotProvided} without a profile URL`}
+                </CardDescription>
+              </div>
+              {result.students.length > 0 &&
+                (isEditing ? (
+                  <Button onClick={onDone} isLoading={updateUrls.isPending}>
+                    {!updateUrls.isPending && <Check className="w-4 h-4 mr-2" />}
+                    {updateUrls.isPending ? 'Saving...' : 'DONE'}
+                  </Button>
+                ) : (
+                  <Button variant="outline" onClick={onEdit}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                ))}
+            </div>
+            {updateUrls.isError && (
+              <p className="text-sm text-red-600">
+                {errorMessage(updateUrls.error, 'Unable to save LeetCode URLs.')}
+              </p>
+            )}
           </CardHeader>
           <CardContent className="p-0">
             {result.students.length === 0 ? (
@@ -163,7 +311,7 @@ function SectionStatsView() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Student Name</TableHead>
-                    <TableHead>LeetCode Profile</TableHead>
+                    <TableHead>LeetCode URL</TableHead>
                     <TableHead className="text-right">Total Solved</TableHead>
                     <TableHead className="text-right">Easy</TableHead>
                     <TableHead className="text-right">Medium</TableHead>
@@ -176,7 +324,22 @@ function SectionStatsView() {
                   {result.students.map((student) => (
                     <TableRow key={student.studentId}>
                       <TableCell className="font-medium">{student.name}</TableCell>
-                      <TableCell><ProfileLink student={student} /></TableCell>
+                      <TableCell className={isEditing ? 'min-w-72' : undefined}>
+                        {isEditing ? (
+                          <Input
+                            type="url"
+                            value={drafts[student.studentId] ?? ''}
+                            onChange={(e) =>
+                              setDrafts((prev) => prev && { ...prev, [student.studentId]: e.target.value })
+                            }
+                            placeholder="https://leetcode.com/u/username/"
+                            aria-label={`LeetCode URL for ${student.name}`}
+                            disabled={updateUrls.isPending}
+                          />
+                        ) : (
+                          <ProfileLink student={student} />
+                        )}
+                      </TableCell>
                       <TableCell className="text-right font-semibold">{formatCount(student.totalSolved)}</TableCell>
                       <TableCell className="text-right">{formatCount(student.easySolved)}</TableCell>
                       <TableCell className="text-right">{formatCount(student.mediumSolved)}</TableCell>
