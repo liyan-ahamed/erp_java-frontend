@@ -15,4 +15,10 @@ export const API_ENDPOINTS = {
   AUDIT_LOGS: {
     BASE: '/audit-logs',
   },
+  LEETCODE: {
+    FILTERS: '/leetcode/filters',
+    STATS: '/leetcode/stats',
+    ME: '/leetcode/me',
+    ME_STATS: '/leetcode/me/stats',
+  },
 } as const;

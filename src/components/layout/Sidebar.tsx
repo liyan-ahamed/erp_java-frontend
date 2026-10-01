@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import { LayoutDashboard, GraduationCap, ChevronDown, ChevronLeft, Calendar, Clock, Bell, Shield } from 'lucide-react';
+import { LayoutDashboard, GraduationCap, ChevronDown, ChevronLeft, Calendar, Clock, Bell, Shield, Code2 } from 'lucide-react';
 
 export const Sidebar = () => {
   const { user, hasRole, logout } = useAuth();
@@ -142,6 +142,23 @@ export const Sidebar = () => {
               )}
             </div>
           )}
+
+          {/* LeetCode — HOD and Staff pick a year/section; Students see their own profile */}
+          <Link
+            href="/dashboard/leetcode"
+            className={`flex items-center px-3 py-2.5 rounded-[10px] font-medium text-sm transition-colors ${
+              pathname.includes('/leetcode')
+                ? 'bg-[#FAFAFA] text-[#111111]'
+                : 'text-[#666666] hover:bg-[#FAFAFA] hover:text-[#111111]'
+            }`}
+          >
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors ${
+              pathname.includes('/leetcode') ? 'text-[#111111]' : 'text-[#666666]'
+            }`}>
+              <Code2 className="w-5 h-5" />
+            </div>
+            <span className="tracking-wide">LeetCode</span>
+          </Link>
 
           {/* Notifications */}
           <Link

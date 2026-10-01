@@ -7,4 +7,5 @@ export const ROUTES = {
   // ATTENDANCE_ANALYTICS: '/dashboard/attendance/analytics',
   NOTIFICATIONS: '/dashboard/notifications',
   AUDIT_LOG: '/dashboard/audit-log',
+  LEETCODE: '/dashboard/leetcode',
 } as const;

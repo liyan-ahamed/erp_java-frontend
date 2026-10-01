@@ -8,4 +8,6 @@ export const QUERY_KEYS = {
   ATTENDANCE: 'attendance',
   ATTENDANCE_SUMMARY: 'attendanceSummary',
   ATTENDANCE_ANALYTICS: 'attendanceAnalytics',
+  LEETCODE_FILTERS: 'leetcodeFilters',
+  LEETCODE_ME: 'leetcodeMe',
 } as const;
