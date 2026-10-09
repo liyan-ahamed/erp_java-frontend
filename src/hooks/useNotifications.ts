@@ -53,13 +53,3 @@ export const useDeleteNotification = () => {
     },
   });
 };
-
-export const useArchiveNotification = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) => notificationService.archiveNotification(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [KEYS.notifications] });
-    },
-  });
-};

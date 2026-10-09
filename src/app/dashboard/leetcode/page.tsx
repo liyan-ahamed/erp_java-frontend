@@ -26,6 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge, BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
+import { getApiErrorMessage } from '@/lib/api-error';
 
 const SELECT_CLASS =
   'h-10 min-w-44 px-3 text-sm border border-[#E8E8E8] rounded-[10px] bg-white text-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] disabled:opacity-50 disabled:cursor-not-allowed';
@@ -36,11 +37,6 @@ const STATUS_BADGE: Record<LeetCodeSyncStatus, { label: string; variant: BadgePr
   FAILED: { label: 'Unavailable', variant: 'warning' },
   INVALID_URL: { label: 'Invalid URL', variant: 'error' },
   URL_NOT_PROVIDED: { label: 'No profile', variant: 'default' },
-};
-
-const errorMessage = (error: unknown, fallback: string) => {
-  const apiMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-  return apiMessage || (error instanceof Error ? error.message : fallback);
 };
 
 const formatSynced = (value: string | null) => (value ? new Date(value).toLocaleString() : 'Never');
@@ -203,7 +199,7 @@ function SectionStatsView() {
           )}
           {fetchSection.isError && (
             <p className="mt-4 text-sm text-red-600">
-              {errorMessage(fetchSection.error, 'Unable to fetch LeetCode statistics.')}
+              {getApiErrorMessage(fetchSection.error, 'Unable to fetch LeetCode statistics.')}
             </p>
           )}
         </CardContent>
@@ -226,7 +222,7 @@ function SectionStatsView() {
               </div>
             ) : top.isError ? (
               <p className="p-8 text-center text-sm text-red-600">
-                {errorMessage(top.error, 'Unable to load the top count.')}
+                {getApiErrorMessage(top.error, 'Unable to load the top count.')}
               </p>
             ) : topStudents.length === 0 ? (
               <p className="p-8 text-center text-sm text-[#666666]">
@@ -241,6 +237,10 @@ function SectionStatsView() {
                       <TableHead>Student Name</TableHead>
                       <TableHead>Section</TableHead>
                       <TableHead className="text-right">Total Solved</TableHead>
+                      <TableHead className="text-right">Easy</TableHead>
+                      <TableHead className="text-right">Medium</TableHead>
+                      <TableHead className="text-right">Hard</TableHead>
+                      <TableHead>Last Synced</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -250,6 +250,10 @@ function SectionStatsView() {
                         <TableCell className="font-medium">{student.name}</TableCell>
                         <TableCell className="text-[#666666]">Section {student.section}</TableCell>
                         <TableCell className="text-right font-semibold">{student.totalSolved}</TableCell>
+                        <TableCell className="text-right">{formatCount(student.easySolved)}</TableCell>
+                        <TableCell className="text-right">{formatCount(student.mediumSolved)}</TableCell>
+                        <TableCell className="text-right">{formatCount(student.hardSolved)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-[#666666]">{formatSynced(student.lastSyncedAt)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -299,7 +303,7 @@ function SectionStatsView() {
             </div>
             {updateUrls.isError && (
               <p className="text-sm text-red-600">
-                {errorMessage(updateUrls.error, 'Unable to save LeetCode URLs.')}
+                {getApiErrorMessage(updateUrls.error, 'Unable to save LeetCode URLs.')}
               </p>
             )}
           </CardHeader>
@@ -383,7 +387,7 @@ function MyStatsView() {
     return (
       <Card>
         <CardContent>
-          <p className="text-sm text-red-600">{errorMessage(error, 'Unable to load your LeetCode profile.')}</p>
+          <p className="text-sm text-red-600">{getApiErrorMessage(error, 'Unable to load your LeetCode profile.')}</p>
         </CardContent>
       </Card>
     );
@@ -428,7 +432,7 @@ function MyStatsView() {
           </p>
         )}
         {fetchMine.isError && (
-          <p className="text-sm text-red-600">{errorMessage(fetchMine.error, 'Unable to fetch LeetCode statistics.')}</p>
+          <p className="text-sm text-red-600">{getApiErrorMessage(fetchMine.error, 'Unable to fetch LeetCode statistics.')}</p>
         )}
       </CardContent>
     </Card>

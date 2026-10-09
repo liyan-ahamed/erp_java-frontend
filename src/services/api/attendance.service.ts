@@ -1,90 +1,63 @@
-import { AttendanceFilters, AttendanceSummary, AttendanceAnalytics, EmployeeAttendanceProfile } from '@/types/attendance';
+import { apiClient } from '@/lib/axios';
+import { API_ENDPOINTS } from '@/constants/api';
+import { mapPage } from '@/lib/pagination';
+import { BackendPage, PaginatedResponse } from '@/types/api';
 import {
-  mockAttendanceRecords,
-  mockEmployees,
-  getAttendanceSummary as getSummary,
-  getAttendanceAnalytics as getAnalytics,
-  getEmployeeAttendanceProfile as getProfile,
-} from '@/data/attendance-data';
-import { PaginatedResponse } from '@/types/api';
+  AttendanceSession,
+  AttendanceSessionListQuery,
+  BulkAttendanceRequest,
+  BulkAttendanceResult,
+  ClassAttendanceSummary,
+  CreateAttendanceSessionRequest,
+  SessionRecords,
+  SubjectAttendance,
+  UpdateAttendanceSessionRequest,
+} from '@/types/attendance';
 
-// Temporarily disabled. Kept intact so Attendance can be restored without
-// recreating its API/mock-data layer. There are currently no active callers.
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
+/** Academic attendance. STAFF manage their own sessions; HOD reads; STUDENT reads /me. */
 export const attendanceService = {
-  getSummary: async (date?: string): Promise<AttendanceSummary> => {
-    await delay(300);
-    return getSummary(date);
+  getSessions: async (query: AttendanceSessionListQuery): Promise<PaginatedResponse<AttendanceSession>> => {
+    const response = await apiClient.get(API_ENDPOINTS.ATTENDANCE.SESSIONS, { params: query });
+    return mapPage(response.data.data as BackendPage<AttendanceSession>);
   },
 
-  getRecords: async (filters: AttendanceFilters = {}): Promise<PaginatedResponse<typeof mockAttendanceRecords[0]>> => {
-    await delay(400);
-    let result = [...mockAttendanceRecords];
-
-    // Default to today or latest available date
-    if (filters.date) {
-      result = result.filter(r => r.date === filters.date);
-    } else {
-      // Get latest working day records
-      const dates = [...new Set(result.map(r => r.date))].sort().reverse();
-      const latestWork = dates.find(d => {
-        const dd = new Date(d);
-        return dd.getDay() !== 0 && dd.getDay() !== 6;
-      });
-      if (latestWork) {
-        result = result.filter(r => r.date === latestWork);
-      }
-    }
-
-    if (filters.department) {
-      result = result.filter(r => r.department === filters.department);
-    }
-
-    if (filters.status) {
-      result = result.filter(r => r.status === filters.status);
-    }
-
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      result = result.filter(r =>
-        r.employee_name.toLowerCase().includes(q) ||
-        r.employee_code.toLowerCase().includes(q) ||
-        r.department.toLowerCase().includes(q)
-      );
-    }
-
-    if (filters.manager) {
-      result = result.filter(r => r.manager === filters.manager);
-    }
-
-    const page = filters.page || 0;
-    const size = filters.size || 15;
-    const start = page * size;
-    const content = result.slice(start, start + size);
-
-    return {
-      content,
-      totalElements: result.length,
-      totalPages: Math.ceil(result.length / size),
-      size,
-      number: page,
-    };
+  createSession: async (payload: CreateAttendanceSessionRequest): Promise<AttendanceSession> => {
+    const response = await apiClient.post(API_ENDPOINTS.ATTENDANCE.SESSIONS, payload);
+    return response.data.data;
   },
 
-  getEmployeeProfile: async (employeeId: number): Promise<EmployeeAttendanceProfile | null> => {
-    await delay(300);
-    return getProfile(employeeId);
+  updateSession: async (id: number, payload: UpdateAttendanceSessionRequest): Promise<AttendanceSession> => {
+    const response = await apiClient.put(API_ENDPOINTS.ATTENDANCE.SESSION(id), payload);
+    return response.data.data;
   },
 
-  getAnalytics: async (): Promise<AttendanceAnalytics> => {
-    await delay(400);
-    return getAnalytics();
+  deleteSession: async (id: number): Promise<void> => {
+    await apiClient.delete(API_ENDPOINTS.ATTENDANCE.SESSION(id));
   },
 
-  getEmployees: async () => {
-    await delay(200);
-    return mockEmployees;
+  getRecords: async (id: number): Promise<SessionRecords> => {
+    const response = await apiClient.get(API_ENDPOINTS.ATTENDANCE.RECORDS(id));
+    return response.data.data;
+  },
+
+  /** All rows are validated first; one bad row rejects the whole request. */
+  saveRecords: async (id: number, payload: BulkAttendanceRequest): Promise<BulkAttendanceResult> => {
+    const response = await apiClient.put(API_ENDPOINTS.ATTENDANCE.RECORDS(id), payload);
+    return response.data.data;
+  },
+
+  finalizeSession: async (id: number): Promise<AttendanceSession> => {
+    const response = await apiClient.post(API_ENDPOINTS.ATTENDANCE.FINALIZE(id));
+    return response.data.data;
+  },
+
+  getClassSummary: async (offeringId: number): Promise<ClassAttendanceSummary> => {
+    const response = await apiClient.get(API_ENDPOINTS.ATTENDANCE.CLASS_SUMMARY(offeringId));
+    return response.data.data;
+  },
+
+  getMyAttendance: async (): Promise<SubjectAttendance[]> => {
+    const response = await apiClient.get(API_ENDPOINTS.ATTENDANCE.ME);
+    return response.data.data;
   },
 };

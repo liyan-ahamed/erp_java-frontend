@@ -5,12 +5,11 @@ import { PageContainer } from '@/components/common/PageContainer';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
-import { useNotifications, useUnreadCount, useMarkAsRead, useMarkAllAsRead, useDeleteNotification, useArchiveNotification } from '@/hooks/useNotifications';
-import { NotificationFilters, NotificationCategory, NotificationPriority, Notification } from '@/types/notification';
-import { categoryLabels, NOTIFICATION_CATEGORIES } from '@/data/notification-data';
-import { Search, Bell, Check, CheckCheck, Trash2, Archive, X, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { Pagination } from '@/components/ui/Pagination';
+import { useNotifications, useUnreadCount, useMarkAsRead, useMarkAllAsRead, useDeleteNotification } from '@/hooks/useNotifications';
+import { NotificationFilters, NotificationPriority, Notification } from '@/types/notification';
+import { Bell, Check, CheckCheck, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const priorityBadge = (priority: NotificationPriority) => {
@@ -38,11 +37,7 @@ const timeAgo = (dateStr: string): string => {
 export default function NotificationsPage() {
   const router = useRouter();
   const [filters, setFilters] = useState<NotificationFilters>({
-    search: '',
-    category: '',
-    priority: '',
     status: '',
-    sort: 'newest',
     page: 0,
     size: 10,
   });
@@ -54,7 +49,6 @@ export default function NotificationsPage() {
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
   const deleteNotification = useDeleteNotification();
-  const archiveNotification = useArchiveNotification();
 
   const toggleSelect = (id: number) => {
     const next = new Set(selectedIds);
@@ -85,57 +79,20 @@ export default function NotificationsPage() {
 
   const filtersBar = (
     <div className="flex flex-col gap-4">
-      {/* Top: Search + Actions */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <div className="flex-1 w-full sm:max-w-xs">
-          <Input
-            icon={<Search className="w-4 h-4" />}
-            placeholder="Search notifications..."
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 0 })}
-          />
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <select
-            value={filters.category}
-            onChange={(e) => setFilters({ ...filters, category: e.target.value as NotificationCategory | '', page: 0 })}
-            className="h-10 px-3 text-sm border border-[#E8E8E8] rounded-[10px] bg-white text-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]"
-          >
-            <option value="">All Categories</option>
-            {NOTIFICATION_CATEGORIES.map(cat => (
-              <option key={cat} value={cat}>{categoryLabels[cat]}</option>
-            ))}
-          </select>
-          <select
-            value={filters.priority}
-            onChange={(e) => setFilters({ ...filters, priority: e.target.value as NotificationPriority | '', page: 0 })}
-            className="h-10 px-3 text-sm border border-[#E8E8E8] rounded-[10px] bg-white text-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]"
-          >
-            <option value="">All Priorities</option>
-            <option value="URGENT">Urgent</option>
-            <option value="HIGH">High</option>
-            <option value="NORMAL">Normal</option>
-            <option value="LOW">Low</option>
-          </select>
-          <select
-            value={filters.status}
-            onChange={(e) => setFilters({ ...filters, status: e.target.value as 'read' | 'unread' | '', page: 0 })}
-            className="h-10 px-3 text-sm border border-[#E8E8E8] rounded-[10px] bg-white text-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]"
-          >
-            <option value="">All Status</option>
-            <option value="unread">Unread</option>
-            <option value="read">Read</option>
-          </select>
-          <select
-            value={filters.sort}
-            onChange={(e) => setFilters({ ...filters, sort: e.target.value as 'newest' | 'oldest' | 'priority' })}
-            className="h-10 px-3 text-sm border border-[#E8E8E8] rounded-[10px] bg-white text-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]"
-          >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="priority">Priority</option>
-          </select>
-        </div>
+      {/* Read status is filtered by the backend across all notifications */}
+      <div className="flex items-center gap-2">
+        <select
+          value={filters.status}
+          onChange={(e) => {
+            setFilters({ ...filters, status: e.target.value as 'read' | 'unread' | '', page: 0 });
+            setSelectedIds(new Set());
+          }}
+          className="h-10 px-3 text-sm border border-[#E8E8E8] rounded-[10px] bg-white text-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]"
+        >
+          <option value="">All Status</option>
+          <option value="unread">Unread</option>
+          <option value="read">Read</option>
+        </select>
       </div>
 
       {/* Bulk actions bar */}
@@ -241,14 +198,9 @@ export default function NotificationsPage() {
                           {notification.title}
                         </h4>
                         <Badge variant={pb.variant}>{pb.label}</Badge>
-                        {notification.category && (
-                          <Badge variant="outline">{categoryLabels[notification.category]}</Badge>
-                        )}
                       </div>
                       <p className="text-[13px] text-[#666666] line-clamp-2 mb-2">{notification.message}</p>
                       <div className="flex items-center gap-3 text-[11px] text-[#9A9A9A]">
-                        {notification.user_name && <span>{notification.user_name}</span>}
-                        <span>•</span>
                         <span>{timeAgo(notification.created_at)}</span>
                         {notification.module && (
                           <>
@@ -271,13 +223,6 @@ export default function NotificationsPage() {
                         </button>
                       )}
                       <button
-                        onClick={(e) => { e.stopPropagation(); archiveNotification.mutate(notification.id); }}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-[#9A9A9A] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors"
-                        title="Archive"
-                      >
-                        <Archive className="w-4 h-4" />
-                      </button>
-                      <button
                         onClick={(e) => {
                           e.stopPropagation();
                           if (window.confirm('Delete this notification?')) {
@@ -298,47 +243,19 @@ export default function NotificationsPage() {
                 <div className="p-12 text-center">
                   <Bell className="w-10 h-10 text-[#D4D4D4] mx-auto mb-3" />
                   <p className="text-sm font-medium text-[#666666]">No notifications found</p>
-                  <p className="text-xs text-[#9A9A9A] mt-1">Try adjusting your filters</p>
+                  {filters.status && <p className="text-xs text-[#9A9A9A] mt-1">Try a different status filter</p>}
                 </div>
               )}
             </div>
 
-            {/* Pagination */}
-            {data && data.totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-[#F5F5F5]">
-                <span className="text-xs text-[#9A9A9A]">
-                  Showing {data.number * data.size + 1}–{Math.min((data.number + 1) * data.size, data.totalElements)} of {data.totalElements}
-                </span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={data.number === 0}
-                    onClick={() => setFilters({ ...filters, page: (filters.page || 0) - 1 })}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  {Array.from({ length: Math.min(data.totalPages, 5) }, (_, i) => (
-                    <Button
-                      key={i}
-                      variant={i === data.number ? 'primary' : 'ghost'}
-                      size="sm"
-                      onClick={() => setFilters({ ...filters, page: i })}
-                      className="w-8 h-8 p-0"
-                    >
-                      {i + 1}
-                    </Button>
-                  ))}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={data.number >= data.totalPages - 1}
-                    onClick={() => setFilters({ ...filters, page: (filters.page || 0) + 1 })}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
+            {data && (
+              <Pagination
+                data={data}
+                onPageChange={(page) => {
+                  setFilters({ ...filters, page });
+                  setSelectedIds(new Set());
+                }}
+              />
             )}
           </Card>
         </div>
@@ -363,9 +280,6 @@ export default function NotificationsPage() {
                     <Badge variant={priorityBadge(detailNotification.priority).variant}>
                       {priorityBadge(detailNotification.priority).label}
                     </Badge>
-                    {detailNotification.category && (
-                      <Badge variant="outline">{categoryLabels[detailNotification.category]}</Badge>
-                    )}
                     <Badge variant={detailNotification.is_read ? 'default' : 'info'}>
                       {detailNotification.is_read ? 'Read' : 'Unread'}
                     </Badge>
@@ -385,10 +299,6 @@ export default function NotificationsPage() {
                   <div>
                     <label className="text-[10px] font-semibold text-[#9A9A9A] uppercase tracking-wider">Module</label>
                     <p className="text-sm text-[#111111] mt-1">{detailNotification.module}</p>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-semibold text-[#9A9A9A] uppercase tracking-wider">From</label>
-                    <p className="text-sm text-[#111111] mt-1">{detailNotification.user_name || '—'}</p>
                   </div>
                   <div>
                     <label className="text-[10px] font-semibold text-[#9A9A9A] uppercase tracking-wider">Time</label>

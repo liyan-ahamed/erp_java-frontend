@@ -2,248 +2,315 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { AlertTriangle, CheckCircle2, ClipboardCheck, Plus } from 'lucide-react';
 import { PageContainer } from '@/components/common/PageContainer';
-import { MetricCard } from '@/components/ui/MetricCard';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { RequireRole } from '@/components/common/RequireRole';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
+import { Pagination } from '@/components/ui/Pagination';
 import { Spinner } from '@/components/ui/Spinner';
-import { useAttendanceSummary, useAttendanceRecords } from '@/hooks/useAttendance';
-import { AttendanceFilters, AttendanceStatus } from '@/types/attendance';
-import { DEPARTMENTS, ATTENDANCE_STATUSES } from '@/data/attendance-data';
-import { Search, Users, UserX, Clock, AlertTriangle, Coffee, Laptop, ChevronLeft, ChevronRight, BarChart3, User } from 'lucide-react';
-import { notFound } from 'next/navigation';
-import { isAttendanceEnabled } from '@/lib/feature-flags';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
+import { EmptyBlock, ErrorBanner, LoadingBlock, SidePanel } from '@/components/gradebook/shared';
+import { FilterBar, ReadOnlyNote, StatTile, StatusBadge, offeringOptionLabel } from '@/components/erp/shared';
+import { AttendanceSessionForm } from '@/components/erp/AttendanceSessionForm';
+import { useAuth } from '@/contexts/auth-context';
+import { useSections } from '@/hooks/useAcademic';
+import { useAllSubjectOfferings } from '@/hooks/useGradebook';
+import { useAttendanceSessions, useClassAttendanceSummary, useMyAttendance } from '@/hooks/useAttendance';
+import { SELECT_CLASS, formatDate } from '@/lib/gradebook-labels';
+import { NO_ATTENDANCE_DATA_TEXT, SESSION_STATUS_BADGE, formatPercent } from '@/lib/erp-labels';
+import { ROUTES } from '@/constants/routes';
+import { AttendanceSessionStatus, AttendanceSummary } from '@/types/attendance';
 
-const statusBadge: Record<AttendanceStatus, { variant: 'success' | 'error' | 'warning' | 'info' | 'default' | 'outline'; label: string }> = {
-  PRESENT: { variant: 'success', label: 'Present' },
-  ABSENT: { variant: 'error', label: 'Absent' },
-  LATE: { variant: 'warning', label: 'Late' },
-  HALF_DAY: { variant: 'info', label: 'Half Day' },
-  WORK_FROM_HOME: { variant: 'default', label: 'WFH' },
-  ON_LEAVE: { variant: 'outline', label: 'On Leave' },
-  WEEKEND: { variant: 'default', label: 'Weekend' },
-  HOLIDAY: { variant: 'default', label: 'Holiday' },
-};
+// ---------- Shared bits ----------
 
-export default function AttendancePage() {
-  // Attendance is temporarily disabled. Remove this guard to restore the page.
-  if (!isAttendanceEnabled()) notFound();
+/** Percentage as returned by the backend; null means nothing to count yet (never shown as 0%). */
+function PercentValue({ stats }: { stats: AttendanceSummary }) {
+  const pct = formatPercent(stats.attendancePercentage);
+  if (!pct) return <span className="text-xs font-medium text-[#9A9A9A] italic">{NO_ATTENDANCE_DATA_TEXT}</span>;
+  return <span className={`font-semibold ${stats.belowThreshold ? 'text-red-600' : 'text-[#111111]'}`}>{pct}</span>;
+}
 
-  const [filters, setFilters] = useState<AttendanceFilters>({
-    search: '',
-    department: '',
-    status: '',
-    page: 0,
-    size: 15,
+function ThresholdFlag({ stats }: { stats: AttendanceSummary }) {
+  if (stats.attendancePercentage === null) return null;
+  return stats.belowThreshold ? (
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600">
+      <AlertTriangle className="w-3.5 h-3.5" aria-hidden /> Below {Number(stats.minimumRequiredPercentage)}%
+      {stats.shortagePercentagePoints !== null && ` (short by ${Number(stats.shortagePercentagePoints)} pts)`}
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
+      <CheckCircle2 className="w-3.5 h-3.5" aria-hidden /> Meets minimum
+    </span>
+  );
+}
+
+// ---------- STUDENT ----------
+
+function StudentAttendance() {
+  const { data, isLoading, isError, error } = useMyAttendance();
+  if (isLoading) return <LoadingBlock label="Loading your attendance..." />;
+  if (isError || !data) return <ErrorBanner error={error} fallback="Unable to load your attendance." title="Error Loading Attendance" />;
+  if (data.length === 0 || data.every((s) => s.totalSessions === 0)) {
+    return <Card><EmptyBlock icon={<ClipboardCheck className="w-10 h-10" />} title="No finalized attendance available yet." hint="Attendance appears once your teachers finalize sessions." /></Card>;
+  }
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-[#9A9A9A]">
+        Counts include finalized sessions only. Attendance % = (Present + On Duty) ÷ (Present + Absent + On Duty); excused sessions are left out. Figures are calculated by the ERP.
+      </p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {data.map((s) => (
+          <Card key={s.subjectOfferingId} className={s.belowThreshold ? 'border-red-200' : ''}>
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="text-base font-semibold text-[#111111]">{s.subjectName}</h3>
+                  <p className="text-xs text-[#9A9A9A] mt-0.5">
+                    <span className="font-mono">{s.subjectCode}</span> · {s.staffName} · Sem {s.semester} · {s.academicYear}
+                  </p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <div className="text-xl"><PercentValue stats={s} /></div>
+                  <div className="text-[11px] text-[#9A9A9A]">Minimum {Number(s.minimumRequiredPercentage)}%</div>
+                </div>
+              </div>
+              <ThresholdFlag stats={s} />
+              <dl className="grid grid-cols-5 gap-2 text-center">
+                {[
+                  ['Sessions', s.totalSessions], ['Present', s.present], ['Absent', s.absent], ['On Duty', s.onDuty], ['Excused', s.excused],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-lg bg-[#FAFAFA] border border-[#F0F0F0] py-2">
+                    <dt className="text-[10px] font-semibold text-[#9A9A9A] uppercase tracking-wide">{label}</dt>
+                    <dd className="text-sm font-bold text-[#111111] mt-0.5">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------- STAFF / HOD: sessions ----------
+
+function SessionList({ canCreate }: { canCreate: boolean }) {
+  const router = useRouter();
+  const offerings = useAllSubjectOfferings();
+  const sections = useSections(null, !canCreate);
+  const [filters, setFilters] = useState({ offeringId: '', sectionId: '', status: '', from: '', to: '' });
+  const [page, setPage] = useState(0);
+  const [creating, setCreating] = useState(false);
+  const set = (patch: Partial<typeof filters>) => { setFilters({ ...filters, ...patch }); setPage(0); };
+
+  const { data, isLoading, isError, error, isFetching } = useAttendanceSessions({
+    page,
+    size: 20,
+    subjectOfferingId: filters.offeringId ? Number(filters.offeringId) : undefined,
+    sectionId: filters.sectionId ? Number(filters.sectionId) : undefined,
+    status: (filters.status || undefined) as AttendanceSessionStatus | undefined,
+    from: filters.from || undefined,
+    to: filters.to || undefined,
   });
 
-  const { data: summary, isLoading: summaryLoading } = useAttendanceSummary();
-  const { data: records, isLoading: recordsLoading } = useAttendanceRecords(filters);
-
-  const isLoading = summaryLoading || recordsLoading;
-
-  if (isLoading) {
-    return (
-      <PageContainer>
-        <div className="flex flex-col items-center justify-center h-96 space-y-4">
-          <Spinner size="lg" />
-          <p className="text-[#666666] font-medium text-sm">Loading attendance data...</p>
+  return (
+    <div className="space-y-4">
+      <FilterBar>
+        <select aria-label="Filter by subject offering" className={SELECT_CLASS} value={filters.offeringId} onChange={(e) => set({ offeringId: e.target.value })}>
+          <option value="">{canCreate ? 'All My Offerings' : 'All Offerings'}</option>
+          {(offerings.data ?? []).map((o) => <option key={o.id} value={o.id}>{offeringOptionLabel(o)}</option>)}
+        </select>
+        {!canCreate && (
+          <select aria-label="Filter by section" className={SELECT_CLASS} value={filters.sectionId} onChange={(e) => set({ sectionId: e.target.value })}>
+            <option value="">All Sections</option>
+            {(sections.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.batchName} — Sec {s.name}</option>)}
+          </select>
+        )}
+        <select aria-label="Filter by status" className={SELECT_CLASS} value={filters.status} onChange={(e) => set({ status: e.target.value })}>
+          <option value="">All Statuses</option>
+          <option value="DRAFT">Draft</option>
+          <option value="FINALIZED">Finalized</option>
+        </select>
+        <label className="flex items-center gap-2 text-xs text-[#666666]">From
+          <input type="date" aria-label="From date" className={SELECT_CLASS} value={filters.from} onChange={(e) => set({ from: e.target.value })} />
+        </label>
+        <label className="flex items-center gap-2 text-xs text-[#666666]">To
+          <input type="date" aria-label="To date" className={SELECT_CLASS} value={filters.to} onChange={(e) => set({ to: e.target.value })} />
+        </label>
+        {isFetching && !isLoading && <Spinner size="sm" />}
+      </FilterBar>
+      {canCreate && (
+        <Button size="sm" onClick={() => setCreating(true)}><Plus className="w-4 h-4 mr-1.5" /> Create Session</Button>
+      )}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <div className="flex-1 min-w-0 w-full">
+          {isLoading ? (
+            <LoadingBlock label="Loading attendance sessions..." />
+          ) : isError || !data ? (
+            <ErrorBanner error={error} fallback="Unable to load attendance sessions." />
+          ) : data.content.length === 0 ? (
+            <Card><EmptyBlock icon={<ClipboardCheck className="w-10 h-10" />} title="No attendance sessions found." hint={canCreate ? 'Create a session to take attendance.' : undefined} /></Card>
+          ) : (
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Period</TableHead>
+                    <TableHead>Subject</TableHead>
+                    <TableHead>Section</TableHead>
+                    {!canCreate && <TableHead>Faculty</TableHead>}
+                    <TableHead>Topic</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.content.map((s) => (
+                    <TableRow key={s.id}>
+                      <TableCell className="whitespace-nowrap">{formatDate(s.attendanceDate)}</TableCell>
+                      <TableCell className="text-[#666666]">{s.periodNumber ?? '—'}</TableCell>
+                      <TableCell className="whitespace-nowrap"><span className="font-mono text-xs text-[#9A9A9A] mr-1">{s.subjectCode}</span>{s.subjectName}</TableCell>
+                      <TableCell className="text-[#666666]">{s.sectionName}</TableCell>
+                      {!canCreate && <TableCell className="text-[#666666] whitespace-nowrap">{s.staffName}</TableCell>}
+                      <TableCell className="text-[#666666] max-w-56 truncate">{s.topic ?? '—'}</TableCell>
+                      <TableCell><StatusBadge info={SESSION_STATUS_BADGE[s.status]} /></TableCell>
+                      <TableCell className="text-right">
+                        <Link href={ROUTES.ATTENDANCE_SESSION(s.id)} className="text-sm font-medium text-[#111111] underline-offset-2 hover:underline whitespace-nowrap">
+                          {canCreate && s.status === 'DRAFT' ? 'Take Attendance' : 'View'}
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Pagination data={data} onPageChange={setPage} />
+            </Card>
+          )}
         </div>
-      </PageContainer>
-    );
-  }
-
-  const kpiSection = (
-    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6">
-      <MetricCard
-        title="Present Today"
-        value={summary?.present ?? 0}
-        icon={<Users className="w-5 h-5" />}
-        subtitle={`of ${summary?.total_employees ?? 0} employees`}
-      />
-      <MetricCard
-        title="Absent"
-        value={summary?.absent ?? 0}
-        icon={<UserX className="w-5 h-5" />}
-      />
-      <MetricCard
-        title="Late Arrivals"
-        value={summary?.late ?? 0}
-        icon={<AlertTriangle className="w-5 h-5" />}
-      />
-      <MetricCard
-        title="Attendance %"
-        value={`${summary?.attendance_percentage ?? 0}%`}
-        icon={<BarChart3 className="w-5 h-5" />}
-        trend={summary ? { value: 2.1, isPositive: true } : undefined}
-      />
+        {creating && (
+          <SidePanel title="Create Attendance Session" onClose={() => setCreating(false)}>
+            <AttendanceSessionForm onSaved={(s) => router.push(ROUTES.ATTENDANCE_SESSION(s.id))} />
+          </SidePanel>
+        )}
+      </div>
     </div>
   );
+}
 
-  const secondRow = (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6">
-      <MetricCard
-        title="On Leave"
-        value={summary?.on_leave ?? 0}
-        icon={<Coffee className="w-5 h-5" />}
-      />
-      <MetricCard
-        title="Half Day"
-        value={summary?.half_day ?? 0}
-        icon={<Clock className="w-5 h-5" />}
-      />
-      <MetricCard
-        title="Remote (WFH)"
-        value={summary?.work_from_home ?? 0}
-        icon={<Laptop className="w-5 h-5" />}
-      />
-      <MetricCard
-        title="Avg. Working Hours"
-        value={`${summary?.average_working_hours ?? 0}h`}
-        icon={<Clock className="w-5 h-5" />}
-      />
-    </div>
-  );
+// ---------- STAFF / HOD: class summary ----------
+
+function ClassSummary({ isHod }: { isHod: boolean }) {
+  const offerings = useAllSubjectOfferings();
+  const [offeringId, setOfferingId] = useState<number | null>(null);
+  const [belowOnly, setBelowOnly] = useState(false);
+  const summary = useClassAttendanceSummary(offeringId);
+
+  const rows = summary.data?.students.filter((r) => !belowOnly || r.belowThreshold) ?? [];
 
   return (
-    <PageContainer rawLayout={true}>
-      <div className="space-y-6">
-        {/* KPI Cards */}
-        {kpiSection}
-        {secondRow}
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="flex-1 w-full sm:max-w-xs">
-            <Input
-              icon={<Search className="w-4 h-4" />}
-              placeholder="Search employees..."
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 0 })}
-            />
+    <div className="space-y-4">
+      <FilterBar>
+        <select aria-label="Subject offering" className={SELECT_CLASS} value={offeringId ?? ''} onChange={(e) => setOfferingId(e.target.value ? Number(e.target.value) : null)}>
+          <option value="">Select a subject offering…</option>
+          {(offerings.data ?? []).map((o) => <option key={o.id} value={o.id}>{offeringOptionLabel(o)}{isHod ? ` — ${o.staffName}` : ''}</option>)}
+        </select>
+        <label className="flex items-center gap-2 text-sm text-[#666666]">
+          <input type="checkbox" checked={belowOnly} onChange={(e) => setBelowOnly(e.target.checked)} /> Below threshold only
+        </label>
+        {summary.isFetching && <Spinner size="sm" />}
+      </FilterBar>
+      {offeringId === null ? (
+        <Card><EmptyBlock icon={<ClipboardCheck className="w-10 h-10" />} title="Choose a subject offering to see its class summary." /></Card>
+      ) : summary.isLoading ? (
+        <LoadingBlock label="Loading class summary..." />
+      ) : summary.isError || !summary.data ? (
+        <ErrorBanner error={summary.error} fallback="Unable to load the class summary." />
+      ) : (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <StatTile label="Finalized Sessions" value={summary.data.finalizedSessions} />
+            <StatTile label="Enrolled Students" value={summary.data.students.length} />
+            <StatTile label="Below Threshold" value={summary.data.studentsBelowThreshold} />
+            <StatTile label="Minimum Required" value={`${Number(summary.data.minimumRequiredPercentage)}%`} />
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={filters.department}
-              onChange={(e) => setFilters({ ...filters, department: e.target.value, page: 0 })}
-              className="h-10 px-3 text-sm border border-[#E8E8E8] rounded-[10px] bg-white text-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]"
-            >
-              <option value="">All Departments</option>
-              {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value as AttendanceStatus | '', page: 0 })}
-              className="h-10 px-3 text-sm border border-[#E8E8E8] rounded-[10px] bg-white text-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]"
-            >
-              <option value="">All Status</option>
-              {ATTENDANCE_STATUSES.filter(s => s !== 'WEEKEND' && s !== 'HOLIDAY').map(s => (
-                <option key={s} value={s}>{statusBadge[s].label}</option>
-              ))}
-            </select>
-            <Link href="/dashboard/attendance/analytics">
-              <Button variant="outline" size="md">
-                <BarChart3 className="w-4 h-4 mr-1.5" /> Analytics
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Attendance Table */}
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>ID</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Check In</TableHead>
-                <TableHead>Check Out</TableHead>
-                <TableHead>Working Hours</TableHead>
-                <TableHead>Overtime</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Attendance %</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {records?.content.map((record) => {
-                const sb = statusBadge[record.status];
-                return (
-                  <TableRow key={record.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#FAFAFA] border border-[#E8E8E8] flex items-center justify-center text-xs font-bold text-[#111111]">
-                          {record.employee_name.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-medium text-[#111111] text-sm">{record.employee_name}</p>
-                          <p className="text-[11px] text-[#9A9A9A]">{record.designation}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-[#666666] font-mono text-xs">{record.employee_code}</TableCell>
-                    <TableCell className="text-[#666666]">{record.department}</TableCell>
-                    <TableCell className="text-[#666666] font-mono text-xs">{record.check_in || '—'}</TableCell>
-                    <TableCell className="text-[#666666] font-mono text-xs">{record.check_out || '—'}</TableCell>
-                    <TableCell className="font-medium">{record.working_hours > 0 ? `${record.working_hours}h` : '—'}</TableCell>
-                    <TableCell className={record.overtime > 0 ? 'text-[#059669] font-medium' : 'text-[#9A9A9A]'}>
-                      {record.overtime > 0 ? `+${record.overtime}h` : '—'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={sb.variant}>{sb.label}</Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">{record.attendance_percentage}%</TableCell>
-                    <TableCell>
-                      <Link href={`/dashboard/attendance/${record.employee_id}`}>
-                        <Button variant="ghost" size="sm" className="px-2">
-                          <User className="w-4 h-4" />
-                        </Button>
-                      </Link>
-                    </TableCell>
+          {rows.length === 0 ? (
+            <Card><EmptyBlock icon={<ClipboardCheck className="w-10 h-10" />} title={belowOnly ? 'No students are below the threshold.' : 'No enrolled students.'} /></Card>
+          ) : (
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="whitespace-nowrap">Register No.</TableHead>
+                    <TableHead>Student Name</TableHead>
+                    <TableHead>Sessions</TableHead>
+                    <TableHead>Present</TableHead>
+                    <TableHead>Absent</TableHead>
+                    <TableHead>On Duty</TableHead>
+                    <TableHead>Excused</TableHead>
+                    <TableHead>Attendance %</TableHead>
+                    <TableHead>Threshold</TableHead>
                   </TableRow>
-                );
-              })}
-
-              {records?.content.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={10} className="h-32 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <Users className="w-8 h-8 text-[#D4D4D4]" />
-                      <span className="text-sm text-[#666666]">No attendance records found</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-
-          {/* Pagination */}
-          {records && records.totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-[#F5F5F5]">
-              <span className="text-xs text-[#9A9A9A]">
-                Showing {records.number * records.size + 1}–{Math.min((records.number + 1) * records.size, records.totalElements)} of {records.totalElements}
-              </span>
-              <div className="flex items-center gap-1">
-                <Button variant="ghost" size="sm" disabled={records.number === 0} onClick={() => setFilters({ ...filters, page: (filters.page || 0) - 1 })}>
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                {Array.from({ length: Math.min(records.totalPages, 5) }, (_, i) => (
-                  <Button key={i} variant={i === records.number ? 'primary' : 'ghost'} size="sm" onClick={() => setFilters({ ...filters, page: i })} className="w-8 h-8 p-0">
-                    {i + 1}
-                  </Button>
-                ))}
-                <Button variant="ghost" size="sm" disabled={records.number >= records.totalPages - 1} onClick={() => setFilters({ ...filters, page: (filters.page || 0) + 1 })}>
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((r) => (
+                    <TableRow key={r.studentId} className={r.belowThreshold ? 'bg-red-50/50' : ''}>
+                      <TableCell className="font-mono text-xs whitespace-nowrap">{r.registerNumber}</TableCell>
+                      <TableCell className="font-medium whitespace-nowrap">{r.studentName}</TableCell>
+                      <TableCell>{r.totalSessions}</TableCell>
+                      <TableCell>{r.present}</TableCell>
+                      <TableCell>{r.absent}</TableCell>
+                      <TableCell>{r.onDuty}</TableCell>
+                      <TableCell>{r.excused}</TableCell>
+                      <TableCell className="whitespace-nowrap"><PercentValue stats={r} /></TableCell>
+                      <TableCell className="whitespace-nowrap"><ThresholdFlag stats={r} /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
           )}
-        </Card>
+        </>
+      )}
+    </div>
+  );
+}
+
+function StaffHodAttendance({ isHod }: { isHod: boolean }) {
+  const [tab, setTab] = useState<'sessions' | 'summary'>('sessions');
+  return (
+    <div className="space-y-4">
+      {isHod && <ReadOnlyNote>Department overview. Attendance is taken and finalized by the assigned staff member.</ReadOnlyNote>}
+      <div className="inline-flex rounded-[10px] border border-[#E8E8E8] overflow-hidden" role="tablist" aria-label="Attendance views">
+        {(['sessions', 'summary'] as const).map((t) => (
+          <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
+            className={`px-4 h-9 text-sm font-medium ${tab === t ? 'bg-[#111111] text-white' : 'bg-white text-[#666666] hover:bg-[#F5F5F5]'}`}>
+            {t === 'sessions' ? 'Sessions' : 'Class Summary'}
+          </button>
+        ))}
       </div>
+      {tab === 'sessions' ? <SessionList canCreate={!isHod} /> : <ClassSummary isHod={isHod} />}
+    </div>
+  );
+}
+
+function AttendanceView() {
+  const { hasRole } = useAuth();
+  const isHod = hasRole('ROLE_HOD');
+  return (
+    <PageContainer rawLayout>
+      {isHod || hasRole('ROLE_STAFF') ? <StaffHodAttendance isHod={isHod} /> : <StudentAttendance />}
     </PageContainer>
+  );
+}
+
+export default function AttendancePage() {
+  return (
+    <RequireRole roles={['ROLE_HOD', 'ROLE_STAFF', 'ROLE_STUDENT']}>
+      <AttendanceView />
+    </RequireRole>
   );
 }

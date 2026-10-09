@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 function PollResponseOptions({ item }: { item: StudentSchedule }) {
   const { hasRole } = useAuth();
@@ -64,9 +65,7 @@ function PollResponseOptions({ item }: { item: StudentSchedule }) {
       )}
       {submitResponse.isError && (
         <p className="text-sm text-red-600">
-          {submitResponse.error instanceof Error
-            ? submitResponse.error.message
-            : "Unable to submit response."}
+          {getApiErrorMessage(submitResponse.error, "Unable to submit response.")}
         </p>
       )}
     </div>
@@ -137,9 +136,7 @@ export function StudentSchedulePage({ type }: { type: StudentScheduleType }) {
           setMessage(`${type === "POLL" ? "Poll" : "Deadline"} created.`);
         },
         onError: (error) =>
-          setMessage(
-            error instanceof Error ? error.message : "Unable to create item.",
-          ),
+          setMessage(getApiErrorMessage(error, "Unable to create item.")),
       },
     );
   };

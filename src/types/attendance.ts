@@ -1,83 +1,133 @@
-export type AttendanceStatus =
-  | 'PRESENT'
-  | 'ABSENT'
-  | 'LATE'
-  | 'HALF_DAY'
-  | 'WORK_FROM_HOME'
-  | 'ON_LEAVE'
-  | 'WEEKEND'
-  | 'HOLIDAY';
+// /attendance — academic class attendance (sessions per subject offering). camelCase fields.
 
-export interface Employee {
+export type AttendanceSessionStatus = 'DRAFT' | 'FINALIZED';
+
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'ON_DUTY' | 'EXCUSED';
+
+/** Display-only value the records endpoint returns for students without a mark. Never sent. */
+export const NOT_MARKED = 'NOT_MARKED';
+export type AttendanceRecordStatus = AttendanceStatus | typeof NOT_MARKED;
+
+export interface AttendanceSession {
   id: number;
-  employee_id: string;
-  name: string;
-  email: string;
-  department: string;
-  designation: string;
-  manager: string;
-  avatar_url?: string;
-  joined_date: string;
+  subjectOfferingId: number;
+  subjectId: number;
+  subjectCode: string;
+  subjectName: string;
+  sectionId: number;
+  sectionName: string;
+  staffId: number;
+  staffName: string;
+  attendanceDate: string;
+  timetableSlotId: number | null;
+  periodNumber: number | null;
+  topic: string | null;
+  status: AttendanceSessionStatus;
+  createdById: number;
+  createdAt: string | null;
+  updatedAt: string | null;
+  finalizedAt: string | null;
 }
 
+export interface AttendanceSessionListQuery {
+  page: number;
+  size: number;
+  subjectOfferingId?: number;
+  sectionId?: number;
+  status?: AttendanceSessionStatus;
+  from?: string;
+  to?: string;
+}
+
+export interface CreateAttendanceSessionRequest {
+  subjectOfferingId: number;
+  attendanceDate: string;
+  timetableSlotId: number | null;
+  periodNumber: number | null;
+  topic: string | null;
+}
+
+export type UpdateAttendanceSessionRequest = Omit<CreateAttendanceSessionRequest, 'subjectOfferingId'>;
+
+/** One roster row of GET /attendance/sessions/{id}/records. */
 export interface AttendanceRecord {
-  id: number;
-  employee_id: number;
-  employee_name: string;
-  employee_code: string;
-  department: string;
-  designation: string;
-  date: string;
-  check_in: string | null;
-  check_out: string | null;
-  break_duration: number; // minutes
-  working_hours: number;
-  overtime: number;
-  status: AttendanceStatus;
-  location: string;
-  manager: string;
-  attendance_percentage: number;
+  studentId: number;
+  registerNumber: string;
+  studentName: string;
+  /** false = marked earlier but no longer enrolled. */
+  inRoster: boolean;
+  recordId: number | null;
+  status: AttendanceRecordStatus;
+  remarks: string | null;
+  updatedAt: string | null;
 }
 
+export interface SessionRecords {
+  session: AttendanceSession;
+  rosterSize: number;
+  marked: number;
+  notMarked: number;
+  records: AttendanceRecord[];
+}
+
+export interface BulkAttendanceRequest {
+  records: { studentId: number; status: AttendanceStatus; remarks: string | null }[];
+}
+
+export interface BulkAttendanceResult {
+  sessionId: number;
+  received: number;
+  created: number;
+  updated: number;
+  unchanged: number;
+  rosterSize: number;
+  notMarked: number;
+}
+
+/**
+ * Figures over FINALIZED sessions, calculated by the backend. attendancePercentage and
+ * shortagePercentagePoints are null when there is nothing to count.
+ */
 export interface AttendanceSummary {
+  totalSessions: number;
   present: number;
   absent: number;
-  late: number;
-  half_day: number;
-  on_leave: number;
-  work_from_home: number;
-  attendance_percentage: number;
-  average_working_hours: number;
-  total_employees: number;
+  onDuty: number;
+  excused: number;
+  attended: number;
+  eligible: number;
+  attendancePercentage: number | null;
+  minimumRequiredPercentage: number;
+  belowThreshold: boolean;
+  shortagePercentagePoints: number | null;
 }
 
-export interface AttendanceFilters {
-  date?: string;
-  department?: string;
-  status?: AttendanceStatus | '';
-  search?: string;
-  manager?: string;
-  location?: string;
-  page?: number;
-  size?: number;
+/** GET /attendance/me — one subject of the student's attendance. */
+export interface SubjectAttendance extends AttendanceSummary {
+  subjectOfferingId: number;
+  subjectId: number;
+  subjectCode: string;
+  subjectName: string;
+  academicYear: string;
+  semester: number;
+  staffName: string;
 }
 
-export interface EmployeeAttendanceProfile {
-  employee: Employee;
-  summary: AttendanceSummary;
-  monthly_records: AttendanceRecord[];
-  attendance_percentage: number;
-  average_working_hours: number;
-  total_late_arrivals: number;
-  total_leaves_taken: number;
-  working_hour_trend: { date: string; hours: number }[];
+export interface ClassAttendanceRow extends AttendanceSummary {
+  studentId: number;
+  registerNumber: string;
+  studentName: string;
 }
 
-export interface AttendanceAnalytics {
-  daily_trend: { date: string; present: number; absent: number; late: number }[];
-  department_comparison: { department: string; percentage: number }[];
-  late_arrival_trend: { date: string; count: number }[];
-  working_hours_distribution: { range: string; count: number }[];
-  leave_distribution: { type: string; count: number }[];
-  remote_vs_office: { remote: number; office: number };
+/** GET /attendance/subject-offerings/{id}/summary. */
+export interface ClassAttendanceSummary {
+  subjectOfferingId: number;
+  subjectCode: string;
+  subjectName: string;
+  sectionId: number;
+  sectionName: string;
+  finalizedSessions: number;
+  minimumRequiredPercentage: number;
+  studentsBelowThreshold: number;
+  students: ClassAttendanceRow[];
 }

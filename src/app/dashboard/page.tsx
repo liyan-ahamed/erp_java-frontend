@@ -2,23 +2,17 @@
 
 import { PageContainer } from '@/components/common/PageContainer';
 import { useDashboardSummary } from '@/hooks/useDashboardQuery';
-// Attendance module temporarily disabled:
-// import { useAttendanceSummary } from '@/hooks/useAttendance';
-import type { AttendanceSummary } from '@/types/attendance';
 import { useUnreadCount } from '@/hooks/useNotifications';
-import { useAuditStats } from '@/hooks/useAuditLogs';
-import { Users, Calendar, Grid, GraduationCap, Clock, Bell, Shield, AlertTriangle, UserCheck, UserX, BarChart3, Laptop } from 'lucide-react';
+import { Users, Calendar, Grid, GraduationCap, Bell } from 'lucide-react';
 import { MetricCard } from '@/components/ui/MetricCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
 import { Spinner } from '@/components/ui/Spinner';
+import { getApiErrorMessage } from '@/lib/api-error';
 
 export default function DashboardPage() {
   const { data, isLoading, isError, error } = useDashboardSummary();
-  // const { data: attendanceSummary } = useAttendanceSummary();
-  const attendanceSummary: AttendanceSummary | undefined = undefined;
   const { data: unreadCount } = useUnreadCount();
-  const { data: auditStats } = useAuditStats();
 
   if (isLoading) {
     return (
@@ -32,10 +26,7 @@ export default function DashboardPage() {
   }
 
   if (isError) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const errorMessage =
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (error as any)?.response?.data?.message || (error as any)?.message || 'Failed to load dashboard data.';
+    const errorMessage = getApiErrorMessage(error, 'Failed to load dashboard data.');
     return (
       <PageContainer>
         <div className="p-5 bg-[#FEF2F2] border border-[#FECACA] rounded-xl">
@@ -60,48 +51,14 @@ export default function DashboardPage() {
           value={data?.total_staff?.toLocaleString() ?? 0}
           icon={<Users className="w-5 h-5" />}
         />
-        {/* Attendance KPIs temporarily disabled. */}
-        {false && <>
-        <MetricCard
-          title="Present Today" 
-          value={attendanceSummary?.present ?? 0}
-          icon={<UserCheck className="w-5 h-5" />}
-          subtitle={`of ${attendanceSummary?.total_employees ?? 0} employees`}
-        />
-        <MetricCard 
-          title="Attendance %" 
-          value={`${attendanceSummary?.attendance_percentage ?? 0}%`}
-          icon={<BarChart3 className="w-5 h-5" />}
-          trend={{ value: 2.1, isPositive: true }}
-        />
-        </>}
       </div>
 
-      {/* Second row: Attendance + Notifications + Audit */}
+      {/* Second row: Notifications */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        {/* Attendance status cards temporarily disabled. */}
-        {false && <>
-        <MetricCard
-          title="Absent Today" 
-          value={attendanceSummary?.absent ?? 0}
-          icon={<UserX className="w-5 h-5" />}
-        />
-        <MetricCard 
-          title="Late Arrivals" 
-          value={attendanceSummary?.late ?? 0}
-          icon={<AlertTriangle className="w-5 h-5" />}
-        />
-        </>}
         <MetricCard 
           title="Unread Notifications" 
           value={unreadCount ?? 0}
           icon={<Bell className="w-5 h-5" />}
-        />
-        <MetricCard 
-          title="Today's Activities" 
-          value={auditStats?.total_activities ?? 0}
-          icon={<Shield className="w-5 h-5" />}
-          subtitle={auditStats?.failed_logins ? `${auditStats.failed_logins} failed logins` : undefined}
         />
       </div>
     </div>

@@ -1,40 +1,22 @@
+/** One row from GET /audit-logs. Sensitive values arrive already redacted by the backend. */
 export interface AuditLog {
   id: number;
   user_id: number | null;
-  username: string;
+  username: string | null;
   action: string;
   module: string;
-  entity_type: string;
+  entity_type: string | null;
   entity_id: number | null;
   old_value: string | null;
   new_value: string | null;
-  ip_address: string;
-  user_agent: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  /** Server local time, no timezone offset. */
   timestamp: string;
-  // Client-side enrichment for detail panel
-  role?: string;
-  status?: 'SUCCESS' | 'FAILED' | 'PENDING';
-  description?: string;
-  reason?: string;
-  browser?: string;
-  device?: string;
-  location?: string;
 }
 
-export interface AuditLogFilters {
-  search?: string;
-  date_from?: string;
-  date_to?: string;
-  user?: string;
-  module?: string;
-  action?: string;
-  status?: string;
-  role?: string;
-  page?: number;
-  size?: number;
-}
-
-export interface AuditLogDetail extends AuditLog {
-  before_value_parsed?: Record<string, unknown> | null;
-  after_value_parsed?: Record<string, unknown> | null;
+/** The audit endpoint supports paging only — no server-side search or filters. */
+export interface AuditLogQuery {
+  page: number;
+  size: number;
 }

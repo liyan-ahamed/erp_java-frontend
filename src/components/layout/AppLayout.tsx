@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Sidebar } from './Sidebar';
@@ -16,6 +16,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  // Phones only: the sidebar is an off-canvas menu opened from the header.
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const closeMenu = useCallback(() => setIsMenuOpen(false), []);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && pathname !== ROUTES.LOGIN) {
@@ -40,11 +43,11 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 
   return (
     <div className="relative flex h-screen overflow-hidden text-[#111111] bg-[#FAFAFA]">
-      <Sidebar />
+      <Sidebar isOpen={isMenuOpen} onClose={closeMenu} />
 
-      <div className="flex flex-col flex-1 w-full pl-64 md:pl-72 h-screen overflow-y-auto relative z-10">
-        <Header />
-        <main className="flex-1 p-8 w-full mx-auto">
+      <div className="flex flex-col flex-1 w-full min-w-0 md:pl-72 h-screen overflow-y-auto relative z-10">
+        <Header onOpenMenu={() => setIsMenuOpen(true)} />
+        <main className="flex-1 p-4 md:p-8 w-full min-w-0 mx-auto">
           {children}
         </main>
       </div>

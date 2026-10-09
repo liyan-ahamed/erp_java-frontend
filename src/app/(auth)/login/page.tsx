@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { authService } from '@/services/auth/auth.service';
 import { ROUTES } from '@/constants/routes';
+import { getApiErrorMessage } from '@/lib/api-error';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -53,9 +54,9 @@ export default function LoginPage() {
       const userData = await authService.getCurrentUser();
       login(accessToken, refreshToken || '', userData);
       router.push(ROUTES.DASHBOARD);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err?.response?.data?.message || 'Login failed. Please check your credentials.');
+      setError(getApiErrorMessage(err, 'Login failed. Please check your credentials.'));
       if (typeof window !== 'undefined') {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');

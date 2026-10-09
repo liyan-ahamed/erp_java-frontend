@@ -1,31 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { auditService } from '@/services/api/audit.service';
-import { AuditLogFilters } from '@/types/audit';
+import { QUERY_KEYS } from '@/constants/query-keys';
+import { AuditLogQuery } from '@/types/audit';
 
-const KEYS = {
-  auditLogs: 'auditLogs',
-  auditLogDetail: 'auditLogDetail',
-  auditStats: 'auditStats',
-};
-
-export const useAuditLogs = (filters: AuditLogFilters = {}) => {
+export const useAuditLogs = (query: AuditLogQuery) => {
   return useQuery({
-    queryKey: [KEYS.auditLogs, filters],
-    queryFn: () => auditService.getAuditLogs(filters),
-  });
-};
-
-export const useAuditLogDetail = (id: number | null) => {
-  return useQuery({
-    queryKey: [KEYS.auditLogDetail, id],
-    queryFn: () => auditService.getAuditLogDetail(id!),
-    enabled: id !== null,
-  });
-};
-
-export const useAuditStats = () => {
-  return useQuery({
-    queryKey: [KEYS.auditStats],
-    queryFn: () => auditService.getTodayStats(),
+    queryKey: [QUERY_KEYS.AUDIT_LOGS, query],
+    queryFn: () => auditService.getAuditLogs(query),
+    placeholderData: keepPreviousData,
   });
 };
