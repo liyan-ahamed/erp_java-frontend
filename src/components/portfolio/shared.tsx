@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import axios from 'axios';
-import { CheckCircle2, Clock, ExternalLink, FileEdit, Lock, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Clock, ExternalLink, FileEdit, Lock, AlertCircle } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { DetailField } from '@/components/gradebook/shared';
@@ -28,14 +28,14 @@ export function PortfolioStatusBadge({ status }: { status: PortfolioStatus }) {
 
 /** Evidence is a link only (no uploads). Opened in a new tab, never embedded. */
 export function EvidenceLink({ url }: { url: string | null }) {
-  if (!url) return <span className="text-[#9A9A9A] italic">No evidence provided</span>;
+  if (!url) return <span className="text-muted italic">No evidence provided</span>;
   if (!isWebUrl(url)) return <span className="break-all">{url}</span>;
   return (
     <a
       href={url}
       target="_blank"
       rel="noopener noreferrer nofollow"
-      className="inline-flex items-center gap-1 text-[#2563EB] hover:underline break-all"
+      className="inline-flex items-center gap-1 text-accent hover:underline break-all"
     >
       {url}
       <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" aria-hidden />
@@ -99,8 +99,8 @@ export function ReviewInfo({ entry }: { entry: PortfolioEntry }) {
       </div>
 
       {entry.status === 'VERIFIED' && (
-        <div className="rounded-[10px] border border-[#A7F3D0] bg-[#ECFDF5] p-3 text-sm text-[#065F46] space-y-1">
-          <p className="font-semibold flex items-center gap-1.5">
+        <div className="rounded-[10px] border border-ok/25 bg-ok-soft p-3 text-sm text-ok space-y-1">
+          <p className="font-[550] flex items-center gap-1.5">
             <Lock className="w-4 h-4" aria-hidden /> Verified — permanent portfolio record
           </p>
           <p>
@@ -111,8 +111,8 @@ export function ReviewInfo({ entry }: { entry: PortfolioEntry }) {
       )}
 
       {entry.status === 'REJECTED' && (
-        <div className="rounded-[10px] border border-[#FECACA] bg-[#FEF2F2] p-3 text-sm text-[#991B1B] space-y-1" role="status">
-          <p className="font-semibold flex items-center gap-1.5">
+        <div className="rounded-[10px] border border-danger/20 bg-danger-soft p-3 text-sm text-danger space-y-1" role="status">
+          <p className="font-[550] flex items-center gap-1.5">
             <AlertCircle className="w-4 h-4" aria-hidden /> Needs changes
           </p>
           <p>
@@ -123,8 +123,8 @@ export function ReviewInfo({ entry }: { entry: PortfolioEntry }) {
       )}
 
       {entry.status === 'SUBMITTED' && hasDecision && (
-        <div className="rounded-[10px] border border-[#E8E8E8] bg-[#FAFAFA] p-3 text-sm text-[#666666] space-y-1">
-          <p className="font-semibold text-[#111111]">Earlier rejection (resubmitted since)</p>
+        <div className="rounded-[10px] border border-line bg-soft p-3 text-sm text-muted space-y-1">
+          <p className="font-[550] text-fg">Earlier rejection (resubmitted since)</p>
           <p>
             {entry.reviewedByName || 'A reviewer'} on {formatDateTime(entry.reviewedAt)}
           </p>
@@ -154,8 +154,8 @@ export function ConfirmBox({
   children?: ReactNode;
 }) {
   return (
-    <div className="rounded-[10px] border border-[#E8E8E8] bg-[#FAFAFA] p-4 space-y-3" role="alertdialog" aria-label={confirmLabel}>
-      <div className="text-sm text-[#111111]">{message}</div>
+    <div className="rounded-[12px] border border-line bg-soft p-4 space-y-3" role="alertdialog" aria-label={confirmLabel}>
+      <div className="text-[13px] text-fg leading-relaxed">{message}</div>
       {children}
       <div className="flex gap-2">
         <Button size="sm" variant={variant} onClick={onConfirm} isLoading={isLoading}>
@@ -173,4 +173,4 @@ export const httpStatus = (error: unknown): number | undefined =>
   axios.isAxiosError(error) ? error.response?.status : undefined;
 
 export const TEXTAREA_CLASS =
-  'w-full bg-white border border-[#E8E8E8] rounded-[10px] text-sm text-[#111111] placeholder:text-[#9A9A9A] focus:outline-none focus:ring-1 focus:ring-[#111111] focus:border-[#111111] px-3 py-2.5';
+  'f-control';

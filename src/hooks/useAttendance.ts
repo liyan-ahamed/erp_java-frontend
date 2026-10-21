@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/query-keys';
 import { attendanceService } from '@/services/api/attendance.service';
 import {
@@ -37,10 +37,21 @@ export const useClassAttendanceSummary = (offeringId: number | null) =>
     ...NO_POLLING,
   });
 
-export const useMyAttendance = () =>
+/** Class summaries of several courses at once (one request per course, shared cache with the single hook). */
+export const useClassAttendanceSummaries = (offeringIds: number[]) =>
+  useQueries({
+    queries: offeringIds.map((id) => ({
+      queryKey: [QUERY_KEYS.ATTENDANCE_SUMMARY, id],
+      queryFn: () => attendanceService.getClassSummary(id),
+      ...NO_POLLING,
+    })),
+  });
+
+export const useMyAttendance = (enabled = true) =>
   useQuery({
     queryKey: [QUERY_KEYS.MY_ATTENDANCE],
     queryFn: attendanceService.getMyAttendance,
+    enabled,
     ...NO_POLLING,
   });
 

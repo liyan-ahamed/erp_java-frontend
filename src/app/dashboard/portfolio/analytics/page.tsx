@@ -1,7 +1,8 @@
 'use client';
 
-import { ReactNode } from 'react';
-import { AlertCircle, BarChart3, CheckCircle2, Clock, Users } from 'lucide-react';
+import { ReactNode, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { AlertCircle, BarChart3, CheckCircle2, Clock, Users } from '@/components/ui/icons';
 import { PageContainer } from '@/components/common/PageContainer';
 import { RequireRole } from '@/components/common/RequireRole';
 import { Card } from '@/components/ui/Card';
@@ -9,6 +10,8 @@ import { MetricCard } from '@/components/ui/MetricCard';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import { EmptyBlock, ErrorBanner, LoadingBlock } from '@/components/gradebook/shared';
 import { usePortfolioSummary } from '@/hooks/usePortfolio';
+import { isPortfolioAnalyticsEnabled } from '@/lib/feature-flags';
+import { ROUTES } from '@/constants/routes';
 import { ACTIVITY_TYPES, ACTIVITY_TYPE_LABELS, LEVELS, LEVEL_LABELS } from '@/lib/portfolio-labels';
 
 /** A breakdown table with a proportional bar; the number is always shown as text. */
@@ -16,12 +19,12 @@ function Breakdown({ title, rows }: { title: string; rows: { key: string; label:
   const max = Math.max(1, ...rows.map((r) => r.count));
   return (
     <Card>
-      <div className="px-6 py-4 border-b border-[#F5F5F5]">
-        <h3 className="text-sm font-semibold text-[#111111]">{title}</h3>
-        <p className="text-xs text-[#9A9A9A]">Verified entries</p>
+      <div className="px-6 py-4 border-b border-line">
+        <h3 className="text-sm font-[550] text-fg">{title}</h3>
+        <p className="text-xs text-muted">Verified entries</p>
       </div>
       {rows.length === 0 ? (
-        <p className="px-6 py-6 text-sm text-[#9A9A9A]">No data.</p>
+        <p className="px-6 py-6 text-sm text-muted">No data.</p>
       ) : (
         <Table>
           <TableBody>
@@ -29,11 +32,11 @@ function Breakdown({ title, rows }: { title: string; rows: { key: string; label:
               <TableRow key={r.key}>
                 <TableCell className="w-2/5">{r.label}</TableCell>
                 <TableCell>
-                  <div className="h-2 rounded-full bg-[#F5F5F5] overflow-hidden" aria-hidden>
-                    <div className="h-full bg-[#111111] rounded-full" style={{ width: `${(r.count / max) * 100}%` }} />
+                  <div className="h-2 rounded-full bg-soft overflow-hidden" aria-hidden>
+                    <div className="h-full bg-fg rounded-full" style={{ width: `${(r.count / max) * 100}%` }} />
                   </div>
                 </TableCell>
-                <TableCell className="w-12 text-right font-semibold">{r.count}</TableCell>
+                <TableCell className="w-12 text-right font-[550]">{r.count}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -60,7 +63,7 @@ function AnalyticsView() {
 
   return (
     <PageContainer rawLayout={true}>
-      <p className="text-sm text-[#666666] mb-4">{scopeNote}</p>
+      <p className="text-sm text-muted mb-4">{scopeNote}</p>
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <MetricCard title="Total Entries" value={reviewed} icon={<BarChart3 className="w-4 h-4" />} subtitle="Submitted, verified or rejected" />
         <MetricCard title="Verified" value={data.verified} icon={<CheckCircle2 className="w-4 h-4" />} />
@@ -88,19 +91,19 @@ function AnalyticsView() {
               label: (
                 <span>
                   {b.batchName}
-                  {b.currentYear ? <span className="text-xs text-[#9A9A9A]"> · Year {b.currentYear}</span> : null}
+                  {b.currentYear ? <span className="text-xs text-muted"> · Year {b.currentYear}</span> : null}
                 </span>
               ),
               count: b.verified,
             }))}
           />
           <Card>
-            <div className="px-6 py-4 border-b border-[#F5F5F5]">
-              <h3 className="text-sm font-semibold text-[#111111]">By Section</h3>
-              <p className="text-xs text-[#9A9A9A]">Verified entries</p>
+            <div className="px-6 py-4 border-b border-line">
+              <h3 className="text-sm font-[550] text-fg">By Section</h3>
+              <p className="text-xs text-muted">Verified entries</p>
             </div>
             {data.verifiedBySection.length === 0 ? (
-              <p className="px-6 py-6 text-sm text-[#9A9A9A]">No data.</p>
+              <p className="px-6 py-6 text-sm text-muted">No data.</p>
             ) : (
               <Table>
                 <TableHeader>
@@ -115,7 +118,7 @@ function AnalyticsView() {
                     <TableRow key={s.sectionId}>
                       <TableCell>{s.batchName}</TableCell>
                       <TableCell>{s.sectionName}</TableCell>
-                      <TableCell className="text-right font-semibold">{s.verified}</TableCell>
+                      <TableCell className="text-right font-[550]">{s.verified}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -128,7 +131,15 @@ function AnalyticsView() {
   );
 }
 
+/** Analytics is switched off by a frontend flag: redirect without mounting the view, so no analytics API runs. */
+function AnalyticsDisabled() {
+  const router = useRouter();
+  useEffect(() => router.replace(ROUTES.PORTFOLIO_REVIEW), [router]);
+  return null;
+}
+
 export default function PortfolioAnalyticsPage() {
+  if (!isPortfolioAnalyticsEnabled()) return <AnalyticsDisabled />;
   return (
     <RequireRole roles={['ROLE_STAFF', 'ROLE_HOD']}>
       <AnalyticsView />

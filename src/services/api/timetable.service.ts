@@ -1,11 +1,17 @@
 import { apiClient } from '@/lib/axios';
 import { API_ENDPOINTS } from '@/constants/api';
-import { TimetableListQuery, TimetableSlot, TimetableSlotRequest } from '@/types/timetable';
+import { PeriodResponse, TimetableListQuery, TimetableSlot, TimetableSlotRequest } from '@/types/timetable';
 
 /** HOD manages slots; STAFF read their own; STAFF and STUDENT get /me. Lists are not paginated. */
 export const timetableService = {
   getSlots: async (query: TimetableListQuery): Promise<TimetableSlot[]> => {
     const response = await apiClient.get(API_ENDPOINTS.TIMETABLE.BASE, { params: query });
+    return response.data.data;
+  },
+
+  /** The institution's official daily schedule (P1–P8 plus break and lunch), in time order. */
+  getPeriods: async (): Promise<PeriodResponse[]> => {
+    const response = await apiClient.get(API_ENDPOINTS.TIMETABLE.PERIODS);
     return response.data.data;
   },
 

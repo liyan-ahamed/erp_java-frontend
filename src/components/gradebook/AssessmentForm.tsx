@@ -1,12 +1,15 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 import { FieldLabel, FormError } from '@/components/gradebook/shared';
 import { useAllSubjectOfferings, useCreateAssessment, useUpdateAssessment } from '@/hooks/useGradebook';
+import { useBatches } from '@/hooks/useAcademic';
 import { ASSESSMENT_TYPES, ASSESSMENT_TYPE_LABELS, SELECT_CLASS, offeringLabel } from '@/lib/gradebook-labels';
+import { TeachingSelector } from '@/components/academic/TeachingSelector';
+import { ClassRow, TeachingSelection, resolveSelection } from '@/lib/teaching-context';
 import { Assessment, AssessmentType, UpdateAssessmentRequest } from '@/types/gradebook';
 
 interface FormState {
@@ -19,15 +22,18 @@ interface FormState {
   assessmentDate: string;
 }
 
-const toForm = (a?: Assessment): FormState => ({
+const toForm = (a?: Assessment, copy = false): FormState => ({
   subjectOfferingId: a ? String(a.subjectOfferingId) : '',
-  title: a?.title ?? '',
+  title: a ? (copy ? `${a.title} (copy)` : a.title) : '',
   assessmentType: a?.assessmentType ?? '',
   maxMarks: a ? String(Number(a.maxMarks)) : '',
   passMarks: a?.passMarks !== null && a?.passMarks !== undefined ? String(Number(a.passMarks)) : '',
   weightage: a?.weightage !== null && a?.weightage !== undefined ? String(Number(a.weightage)) : '',
-  assessmentDate: a?.assessmentDate ?? '',
+  // A copy gets a fresh date: it is a new sitting of the assessment.
+  assessmentDate: copy ? '' : a?.assessmentDate ?? '',
 });
+
+const isActive = (r: ClassRow) => r.active;
 
 /** Light checks for obvious mistakes; the backend stays authoritative. */
 const validate = (f: FormState): string | null => {
@@ -45,20 +51,44 @@ const validate = (f: FormState): string | null => {
   return null;
 };
 
+interface AssessmentFormProps {
+  /** Edit this DRAFT assessment. */
+  assessment?: Assessment;
+  /** Create a new assessment pre-filled from this one (Duplicate). Marks are never copied. */
+  template?: Assessment;
+  /** Create mode: start with this class chosen (e.g. "Add to this class"). */
+  initialOfferingId?: number;
+  onSaved: (a: Assessment) => void;
+}
+
 /**
- * Create (STAFF, own active offerings only) or edit a DRAFT assessment.
- * Weightage is stored as entered — nothing is calculated from it.
+ * Create (STAFF, own active offerings only) or edit a DRAFT assessment. The class is picked as
+ * Batch → Semester → Class. Weightage is stored as entered — nothing is calculated from it.
  */
-export function AssessmentForm({ assessment, onSaved }: { assessment?: Assessment; onSaved: (a: Assessment) => void }) {
+export function AssessmentForm({ assessment, template, initialOfferingId, onSaved }: AssessmentFormProps) {
   const isEdit = !!assessment;
-  const [form, setForm] = useState<FormState>(toForm(assessment));
+  const [form, setForm] = useState<FormState>(() => {
+    const base = isEdit ? toForm(assessment) : toForm(template, true);
+    return initialOfferingId ? { ...base, subjectOfferingId: String(initialOfferingId) } : base;
+  });
   const [localError, setLocalError] = useState('');
   const offerings = useAllSubjectOfferings(!isEdit);
+  const batches = useBatches(!isEdit);
   const create = useCreateAssessment();
   const update = useUpdateAssessment();
   const mutation = isEdit ? update : create;
 
-  const activeOfferings = offerings.data?.filter((o) => o.active) ?? [];
+  const allOfferings = useMemo(() => offerings.data ?? [], [offerings.data]);
+  const activeOfferings = allOfferings.filter((o) => o.active);
+  const chosen = allOfferings.find((o) => o.id === Number(form.subjectOfferingId));
+  const [pick, setPick] = useState<TeachingSelection | null>(null);
+  const selection = resolveSelection(
+    pick ?? (chosen ? { batchId: chosen.batchId, semester: chosen.semester, offeringId: chosen.id } : { batchId: null, semester: null, offeringId: null }),
+    allOfferings,
+    batches.data,
+  );
+  // An inactive class (e.g. duplicating an old assessment) can't take new assessments.
+  const offeringId = selection.offeringId !== null && activeOfferings.some((o) => o.id === selection.offeringId) ? selection.offeringId : null;
 
   const set = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((old) => ({ ...old, [field]: e.target.value }));
@@ -80,7 +110,11 @@ export function AssessmentForm({ assessment, onSaved }: { assessment?: Assessmen
     if (assessment) {
       update.mutate({ id: assessment.id, payload }, { onSuccess: onSaved });
     } else {
-      create.mutate({ ...payload, subjectOfferingId: Number(form.subjectOfferingId) }, { onSuccess: onSaved });
+      if (offeringId === null) {
+        setLocalError('Choose the class for this assessment.');
+        return;
+      }
+      create.mutate({ ...payload, subjectOfferingId: offeringId }, { onSuccess: onSaved });
     }
   };
 
@@ -91,27 +125,16 @@ export function AssessmentForm({ assessment, onSaved }: { assessment?: Assessmen
     return <FormError error={offerings.error} fallback="Unable to load your subject offerings." />;
   }
   if (!isEdit && activeOfferings.length === 0) {
-    return <p className="text-sm text-[#666666]">No active subject offerings assigned to you.</p>;
+    return <p className="text-sm text-muted">No active courses assigned to you.</p>;
   }
 
   return (
     <form onSubmit={submit} className="space-y-4">
       {isEdit ? (
-        <p className="text-xs text-[#666666]">{offeringLabel(assessment)}</p>
+        <p className="text-xs text-muted">{offeringLabel(assessment)}</p>
       ) : (
-        <div className="space-y-1.5 flex flex-col">
-          <FieldLabel htmlFor="assessment-offering">Subject Offering *</FieldLabel>
-          <select
-            id="assessment-offering"
-            required
-            value={form.subjectOfferingId}
-            onChange={set('subjectOfferingId')}
-            className={SELECT_CLASS}
-          >
-            <option value="">Select offering</option>
-            {activeOfferings.map((o) => <option key={o.id} value={o.id}>{offeringLabel(o)}</option>)}
-          </select>
-        </div>
+        <TeachingSelector rows={allOfferings} batches={batches.data} value={{ ...selection, offeringId }} classMode="required"
+          classFilter={isActive} stacked idPrefix="assessment" onChange={setPick} />
       )}
       <div className="space-y-1.5">
         <FieldLabel htmlFor="assessment-title">Title *</FieldLabel>
@@ -144,9 +167,9 @@ export function AssessmentForm({ assessment, onSaved }: { assessment?: Assessmen
           <Input id="assessment-weightage" type="number" min={0.01} max={100} step={0.01} value={form.weightage} onChange={set('weightage')} />
         </div>
       </div>
-      <p className="text-xs text-[#9A9A9A]">Pass marks and weightage are optional. Weightage is stored for reference only.</p>
+      <p className="text-xs text-muted">Pass marks and weightage are optional. Weightage is stored for reference only.</p>
 
-      {localError && <p className="text-sm text-red-600" role="alert">{localError}</p>}
+      {localError && <p className="text-sm text-danger" role="alert">{localError}</p>}
       {mutation.isError && <FormError error={mutation.error} fallback={isEdit ? 'Unable to update assessment.' : 'Unable to create assessment.'} />}
 
       <Button type="submit" className="w-full" isLoading={mutation.isPending}>

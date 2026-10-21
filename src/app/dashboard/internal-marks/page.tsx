@@ -2,7 +2,7 @@
 
 import { Fragment, Suspense, useState } from 'react';
 import { notFound, useRouter, useSearchParams } from 'next/navigation';
-import { ChevronDown, ChevronRight, Calculator, Info } from 'lucide-react';
+import { ChevronDown, ChevronRight, Calculator, Info } from '@/components/ui/icons';
 import { PageContainer } from '@/components/common/PageContainer';
 import { RequireRole } from '@/components/common/RequireRole';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -13,7 +13,11 @@ import { CalculationStatusBadge, InternalMarksBreakdown } from '@/components/gra
 import { useAuth } from '@/contexts/auth-context';
 import { useAllSubjectOfferings, useMyInternalMarks, useOfferingInternalMarks } from '@/hooks/useGradebook';
 import { ROUTES } from '@/constants/routes';
-import { SELECT_CLASS, SUBJECT_TYPE_LABELS, classLabel, offeringLabel } from '@/lib/gradebook-labels';
+import { classLabel, subjectTypeLabel } from '@/lib/gradebook-labels';
+import { OfferingPicker } from '@/components/academic/AcademicContextFilter';
+import { TeachingSelector } from '@/components/academic/TeachingSelector';
+import { useTeachingSelection } from '@/hooks/useTeachingSelection';
+import { useCohortsIn } from '@/hooks/useAcademic';
 import { InternalMarks } from '@/types/gradebook';
 import { isGradebookEnabled } from '@/lib/feature-flags';
 
@@ -22,7 +26,7 @@ import { isGradebookEnabled } from '@/lib/feature-flags';
 
 function NotConfiguredNotice() {
   return (
-    <div className="flex items-start gap-3 rounded-[10px] bg-[#EFF6FF] border border-[#BFDBFE] p-4 text-sm text-[#1E40AF]">
+    <div className="flex items-start gap-3 rounded-[10px] bg-accent-soft border border-accent/30 p-4 text-sm text-accent">
       <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
       <div>
         <p className="font-medium">Internal calculation not configured yet.</p>
@@ -37,14 +41,16 @@ function NotConfiguredNotice() {
 const allPending = (list: InternalMarks[]) =>
   list.every((m) => m.students.every((s) => s.calculationStatus === 'PENDING_CALCULATION_CONFIGURATION'));
 
-/** HOD / STAFF: choose an offering, then see the class. */
-function OfferingInternalMarks() {
+/** HOD: Cohort → Semester → Section → Subject. STAFF: Batch → Semester → Class (their own classes). */
+function OfferingInternalMarks({ isStaff }: { isStaff: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const selected = Number(searchParams.get('offering')) || null;
+  const teaching = useTeachingSelection();
+  const selected = isStaff ? teaching.selection.offeringId : Number(searchParams.get('offering')) || null;
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const offerings = useAllSubjectOfferings();
+  const cohorts = useCohortsIn(offerings.data);
   const { data, isLoading, isError, error } = useOfferingInternalMarks(selected);
   const practical = !!data?.practicalComponentApplicable;
 
@@ -53,28 +59,30 @@ function OfferingInternalMarks() {
     router.replace(value ? `${ROUTES.INTERNAL_MARKS}?offering=${value}` : ROUTES.INTERNAL_MARKS);
   };
 
-  const picker = (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-      <select
-        aria-label="Subject offering"
-        value={selected ?? ''}
-        onChange={(e) => select(e.target.value)}
-        disabled={offerings.isLoading}
-        className={`${SELECT_CLASS} w-full sm:max-w-xl`}
-      >
-        <option value="">{offerings.isLoading ? 'Loading offerings...' : 'Select a subject offering'}</option>
-        {offerings.data?.map((o) => <option key={o.id} value={o.id}>{offeringLabel(o)}</option>)}
-      </select>
-    </div>
+  const picker = isStaff ? (
+    <TeachingSelector rows={teaching.rows} batches={teaching.batches} value={teaching.selection} classMode="required"
+      idPrefix="internal-marks" disabled={teaching.isLoading}
+      onChange={(next) => { setExpanded(null); teaching.setSelection(next); }} />
+  ) : (
+    <OfferingPicker
+      rows={offerings.data ?? []}
+      value={selected}
+      cohorts={cohorts}
+      idPrefix="internal-marks"
+      disabled={offerings.isLoading}
+      onChange={(o) => {
+        if (o?.id !== (selected ?? undefined)) select(o ? String(o.id) : '');
+      }}
+    />
   );
 
   let body;
   if (offerings.isError) {
-    body = <ErrorBanner error={offerings.error} fallback="Unable to load subject offerings." />;
+    body = <ErrorBanner error={offerings.error} fallback="Unable to load courses." />;
   } else if (!offerings.isLoading && offerings.data?.length === 0) {
-    body = <Card><EmptyBlock icon={<Calculator className="w-10 h-10" />} title="No subject offerings assigned." /></Card>;
+    body = <Card><EmptyBlock icon={<Calculator className="w-10 h-10" />} title="No courses assigned." /></Card>;
   } else if (!selected) {
-    body = <Card><EmptyBlock icon={<Calculator className="w-10 h-10" />} title="Select a subject offering to view internal marks." /></Card>;
+    body = <Card><EmptyBlock icon={<Calculator className="w-10 h-10" />} title={isStaff ? 'Choose a class to view its internal marks.' : 'Choose a cohort, semester, section and subject to view internal marks.'} /></Card>;
   } else if (isLoading) {
     body = <Card><LoadingBlock label="Loading internal marks..." /></Card>;
   } else if (isError || !data) {
@@ -84,10 +92,10 @@ function OfferingInternalMarks() {
       <div className="space-y-4">
         {allPending([data]) && <NotConfiguredNotice />}
         <Card>
-          <div className="px-6 py-4 border-b border-[#F5F5F5] flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold text-[#111111]">{data.offering.subjectName}</h3>
-            <Badge variant="outline">{SUBJECT_TYPE_LABELS[data.offering.subjectType]}</Badge>
-            <span className="text-xs text-[#9A9A9A]">
+          <div className="px-6 py-4 border-b border-line flex flex-wrap items-center gap-2">
+            <h3 className="text-sm font-[550] text-fg">{data.offering.subjectName}</h3>
+            <Badge variant="outline">{subjectTypeLabel(data.offering.subjectType)}</Badge>
+            <span className="text-xs text-muted">
               {classLabel(data.offering)} · Sem {data.offering.semester} · {data.offering.academicYear} · {data.offering.staffName}
             </span>
           </div>
@@ -117,7 +125,7 @@ function OfferingInternalMarks() {
                             <button
                               aria-label={open ? `Hide details for ${s.name}` : `Show details for ${s.name}`}
                               aria-expanded={open}
-                              className="text-[#9A9A9A]"
+                              className="text-muted"
                             >
                               {open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                             </button>
@@ -131,7 +139,7 @@ function OfferingInternalMarks() {
                         </TableRow>
                         {open && (
                           <TableRow className="hover:bg-transparent">
-                            <TableCell colSpan={practical ? 7 : 6} className="bg-[#FAFAFA]">
+                            <TableCell colSpan={practical ? 7 : 6} className="bg-soft">
                               <div className="py-2"><InternalMarksBreakdown entry={s} practical={practical} /></div>
                             </TableCell>
                           </TableRow>
@@ -179,14 +187,14 @@ function MyInternalMarks() {
             const entry = item.students[0];
             return (
               <Card key={item.offering.id}>
-                <div className="px-6 py-4 border-b border-[#F5F5F5] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="px-6 py-4 border-b border-line flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-base font-semibold text-[#111111]">{item.offering.subjectName}</h3>
-                      <span className="font-mono text-xs text-[#9A9A9A]">{item.offering.subjectCode}</span>
-                      <Badge variant="outline">{SUBJECT_TYPE_LABELS[item.offering.subjectType]}</Badge>
+                      <h3 className="text-base font-[550] text-fg">{item.offering.subjectName}</h3>
+                      <span className="font-mono text-xs text-muted">{item.offering.subjectCode}</span>
+                      <Badge variant="outline">{subjectTypeLabel(item.offering.subjectType)}</Badge>
                     </div>
-                    <p className="text-xs text-[#9A9A9A] mt-0.5">Semester {item.offering.semester} · {item.offering.academicYear}</p>
+                    <p className="text-xs text-muted mt-0.5">Semester {item.offering.semester} · {item.offering.academicYear}</p>
                   </div>
                   {entry && <CalculationStatusBadge status={entry.calculationStatus} />}
                 </div>
@@ -194,7 +202,7 @@ function MyInternalMarks() {
                   {entry ? (
                     <InternalMarksBreakdown entry={entry} practical={item.practicalComponentApplicable} />
                   ) : (
-                    <p className="text-sm text-[#666666]">Internal calculation not configured yet.</p>
+                    <p className="text-sm text-muted">Internal calculation not configured yet.</p>
                   )}
                 </CardContent>
               </Card>
@@ -208,7 +216,7 @@ function MyInternalMarks() {
 
 function InternalMarksView() {
   const { hasRole } = useAuth();
-  return hasRole('ROLE_STUDENT') ? <MyInternalMarks /> : <OfferingInternalMarks />;
+  return hasRole('ROLE_STUDENT') ? <MyInternalMarks /> : <OfferingInternalMarks isStaff={hasRole('ROLE_STAFF') && !hasRole('ROLE_HOD')} />;
 }
 
 export default function InternalMarksPage() {

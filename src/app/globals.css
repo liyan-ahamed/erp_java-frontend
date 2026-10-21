@@ -1,71 +1,183 @@
 @import "tailwindcss";
 
-@theme {
-  /* Brand Primary - Clean Black/White aesthetic */
-  --color-primary-50: #fafafa;
-  --color-primary-100: #f5f5f5;
-  --color-primary-200: #e8e8e8;
-  --color-primary-300: #d4d4d4;
-  --color-primary-400: #a3a3a3;
-  --color-primary-500: #737373;
-  --color-primary-600: #525252;
-  --color-primary-700: #404040;
-  --color-primary-800: #262626;
-  --color-primary-900: #171717;
+/* Dark mode follows the `dark` class on <html> (set by ThemeProvider), not the OS setting. */
+@custom-variant dark (&:where(.dark, .dark *));
 
-  /* Surfaces & Borders */
-  --color-surface-DEFAULT: #ffffff;
-  --color-surface-muted: #fafafa;
-  --color-surface-hover: #f5f5f5;
-  --color-border-subtle: #f5f5f5;
-  --color-border-DEFAULT: #e8e8e8;
-  --color-border-strong: #d4d4d4;
-
-  /* Text Colors */
-  --color-text-primary: #111111;
-  --color-text-secondary: #666666;
-  --color-text-muted: #9a9a9a;
-
-  /* Border Radii */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-button: 10px;
-  --radius-input: 10px;
-  --radius-dropdown: 12px;
-  --radius-lg: 16px;
-  --radius-card: 16px;
-  --radius-table: 16px;
-  --radius-xl: 24px;
-  --radius-badge: 999px;
-
-  /* Shadows - Extremely subtle */
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.03), 0 4px 6px -4px rgba(0, 0, 0, 0.02);
-}
-
+/* ============================================================
+   Forma design tokens (frontend.md §3). Light values here,
+   dark overrides on .dark. Every component reads these.
+   ============================================================ */
 :root {
-  --background: #fafafa;
-  --foreground: #111111;
+  --bg: #f5f5f6;
+  --surface: #ffffff;
+  --side: #f1f1f2;
+  --soft: #f7f7f8;
+  --text: #202124;
+  --muted: #86868d;
+  --border: #e9e9ec;
+  --border-strong: #c6c3cc;
+  --accent: #9166cc;
+  --purple: #f4edfc;
+  --green: #eff7f1;
+  --green-text: #528568;
+  --orange: #fff5e9;
+  --orange-text: #b38b4d;
+  /* Not in Forma: the ERP needs an error/destructive colour. Same soft-surface style. */
+  --red: #fcf0ef;
+  --red-text: #b9574f;
+  --avatar-bg: #ece3d5;
+  --avatar-text: #75634d;
+  --shadow: 0 10px 35px #25212d0f, 0 2px 8px #25212d0a;
+
+  /* Role tokens. In light mode each one equals an existing token, so light mode is unchanged;
+     dark mode gives them their own steps so the layers stay distinct. */
+  --shell: var(--surface); /* main workspace behind cards */
+  --hover: var(--soft); /* nav / button hover */
+  --subtle: var(--muted); /* nav section labels, footer, metadata */
+  --placeholder: var(--muted);
+  --nav-text: var(--text);
+  --nav-icon: var(--muted);
+  --nav-active: var(--surface);
+  --nav-active-text: var(--text);
+  --topbar-border: var(--border);
+  --btn: var(--surface);
+  --btn-border: var(--border);
+  --btn-text: var(--text);
+  --control: var(--soft); /* inputs and selects */
+  --control-border: var(--border);
+  --control-border-hover: var(--border);
+  --table-head: var(--soft);
+  --table-head-text: var(--muted);
+  --row-hover: var(--soft);
+  /* Outline badges also match Tailwind's `outline` utility (1px ring in the text colour). */
+  --badge-ring: currentColor;
+  color-scheme: light;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
-  min-h: 100vh;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Dark layers, darkest first: bg → side → shell → surface (cards) → soft/control → hover. */
+.dark {
+  --bg: #0d0f12;
+  --side: #111317;
+  --shell: #15171b;
+  --surface: #1b1e23;
+  --soft: #22262c;
+  --hover: #282d34;
+  --text: #f1f3f5;
+  --muted: #a7adb6;
+  --subtle: #858c96;
+  --placeholder: #7f8792;
+  --border: #303640;
+  --border-strong: #3a414c;
+  --accent: #a985e2;
+  --purple: #2b2238;
+  --green: #1d3025;
+  --green-text: #8fd0a2;
+  --orange: #342a1a;
+  --orange-text: #e0b66b;
+  --red: #3a2023;
+  --red-text: #f09a9f;
+  --avatar-bg: #403a34;
+  --avatar-text: #d8c6ab;
+  --shadow: 0 10px 35px #00000059, 0 2px 8px #00000040;
+
+  --nav-text: #c1c5cc;
+  --nav-icon: #8e949e;
+  --nav-active: #20242a;
+  --nav-active-text: #f1f3f5;
+  --topbar-border: #3a414c;
+  --btn: #20242a;
+  --btn-border: #353b45;
+  --btn-text: #d9dde3;
+  --control: #22262c;
+  --control-border: #353b45;
+  --control-border-hover: #434a56;
+  --table-head: #23272d;
+  --table-head-text: #b0b5be;
+  --row-hover: #24292f;
+  --badge-ring: #3a414c;
+  color-scheme: dark;
 }
 
-/* Base resets */
-input, textarea, select, button {
-  font-family: inherit;
+/* Tailwind utilities backed by the tokens: bg-surface, text-muted, border-line, bg-ok-soft, ... */
+@theme inline {
+  --font-sans: var(--font-dm-sans), Arial, sans-serif;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-side: var(--side);
+  --color-soft: var(--soft);
+  --color-fg: var(--text);
+  --color-muted: var(--muted);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--purple);
+  --color-ok: var(--green-text);
+  --color-ok-soft: var(--green);
+  --color-warn: var(--orange-text);
+  --color-warn-soft: var(--orange);
+  --color-danger: var(--red-text);
+  --color-danger-soft: var(--red);
 }
 
-/* SUBTLE SCROLLBAR */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+  html,
+  body {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    /* Keeps the shell's outer margin inside <body>; otherwise it collapses through and the page
+       grows by one gutter, adding a stray outer scrollbar next to the main scroll area. */
+    display: flow-root;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--font-dm-sans), Arial, sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background 0.2s, color 0.2s;
+  }
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+  }
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--text);
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--placeholder);
+  }
+  /* Native date/time pickers and selects follow the active theme. */
+  select option {
+    background: var(--surface);
+    color: var(--text);
+  }
+}
+
+/* Subtle scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -74,11 +186,991 @@ input, textarea, select, button {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #e8e8e8;
+  background: var(--border);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #d4d4d4;
+  background: var(--border-strong);
+}
+
+/* ============================================================
+   Forma components (frontend.md §5, §7, styles.css).
+   Kept as plain classes because they rely on nested selectors
+   and width/height media queries. Utilities still override them.
+   ============================================================ */
+@layer components {
+  .f-icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+
+  /* ---------- Shell ---------- */
+  /* The ERP uses the whole viewport minus a modest gutter (Forma itself capped this at 1550px,
+     which left large empty sides on wide monitors). One fluid gutter on every side:
+     ~16 px at 1440, ~20 px at 1920, ~25 px at 2560 (capped at 28 px). Phones override it below. */
+  .shell {
+    --shell-gap: clamp(16px, calc(0.83vw + 4px), 28px);
+    display: flex;
+    height: calc(100dvh - 2 * var(--shell-gap));
+    margin: var(--shell-gap);
+    background: var(--shell);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .sidebar {
+    width: 235px;
+    height: 100%;
+    overflow: hidden;
+    background: var(--side);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+  }
+  .sidebar-brand {
+    height: 58px;
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 21px;
+    font-weight: 650;
+    letter-spacing: -0.7px;
+    flex-shrink: 0;
+  }
+  .brand-mark {
+    background: var(--text);
+    color: var(--surface);
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .brand-mark .f-icon {
+    width: 21px;
+    height: 21px;
+  }
+  .workspace-card {
+    margin: 12px 16px 7px;
+    padding: 8px 11px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    min-width: 0;
+    flex-shrink: 0;
+  }
+  .workspace-card .secondary {
+    display: block;
+    font-size: 10px;
+    margin-top: 3px;
+    color: var(--muted);
+  }
+  .nav {
+    padding: 0 15px;
+    flex: 1;
+    min-height: 0;
+    /* The ERP has more modules than the reference; on short screens only the link list scrolls. */
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding-bottom: 8px;
+  }
+  .nav-label {
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    color: var(--subtle);
+    margin: 8px 12px 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .nav-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 12px;
+    margin: 2px 0;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--nav-text);
+    font-size: 13px;
+    line-height: 22px;
+    text-align: left;
+    transition: background 0.15s;
+  }
+  .nav-item:hover {
+    background: var(--hover);
+  }
+  .nav-item .f-icon {
+    color: var(--nav-icon);
+  }
+  .nav-item.active {
+    background: var(--nav-active);
+    color: var(--nav-active-text);
+    box-shadow: 0 2px 3px #00000005;
+  }
+  .nav-item.active .f-icon {
+    color: var(--text);
+  }
+  .nav-item .chev {
+    margin-left: auto;
+    width: 13px;
+    height: 13px;
+    transition: transform 0.15s;
+  }
+  .nav-item .chev.open {
+    transform: rotate(90deg);
+  }
+  .nav-sub {
+    padding-left: 28px;
+  }
+  .nav-sub .nav-item {
+    font-size: 12px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    color: var(--muted);
+  }
+  .nav-sub .nav-item.active {
+    color: var(--text);
+  }
+  .sidebar-bottom {
+    margin-top: auto;
+    padding: 8px 15px;
+    background: var(--side);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .main {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+  }
+  .topbar {
+    height: 73px;
+    border-bottom: 1px solid var(--topbar-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 30px;
+  }
+  .topbar-title {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    font-weight: 550;
+    min-width: 0;
+  }
+  .topbar-title .crumb {
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-shrink: 0;
+  }
+  .topbar-sep {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--avatar-bg);
+    color: var(--avatar-text);
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .notification-dot {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background: #d7b165;
+    top: 8px;
+    right: 9px;
+    border-radius: 50%;
+    border: 1px solid var(--surface);
+    box-sizing: content-box;
+  }
+  .content {
+    padding: 25px 30px;
+  }
+  .utility {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: 12px;
+    color: var(--subtle);
+    gap: 7px;
+    margin-bottom: 22px;
+  }
+  .footer-note {
+    font-size: 10px;
+    color: var(--subtle);
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 24px;
+  }
+  .status-dot {
+    width: 5px;
+    height: 5px;
+    background: var(--green-text);
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+  .drawer-backdrop {
+    display: none;
+  }
+
+  /* ---------- Page heading ---------- */
+  .page-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 24px;
+  }
+  .page-heading h1 {
+    font-size: 27px;
+    font-weight: 550;
+    letter-spacing: -0.9px;
+    margin: 0;
+  }
+  .page-heading p {
+    color: var(--muted);
+    margin-top: 7px;
+    font-size: 13px;
+  }
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 1.4px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  /* ---------- Metrics ---------- */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 13px;
+    margin-bottom: 24px;
+  }
+  .metric {
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 17px 18px;
+    background: var(--surface);
+    min-width: 0;
+  }
+  .metric-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    margin-bottom: 13px;
+  }
+  .metric-icon {
+    padding: 8px;
+    border-radius: 8px;
+    background: var(--soft);
+    display: flex;
+  }
+  .metric-value {
+    font-size: 25px;
+    font-weight: 550;
+    letter-spacing: -1px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+    word-break: break-word;
+  }
+  .delta {
+    font-size: 10px;
+    letter-spacing: 0;
+    background: var(--soft);
+    color: var(--muted);
+    padding: 4px 6px;
+    border-radius: 5px;
+    font-weight: 400;
+  }
+  .metric-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* ---------- Panels ---------- */
+  .panel {
+    border: 1px solid var(--border);
+    border-radius: 17px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .panel-header {
+    padding: 19px 21px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .panel-header h2 {
+    font-size: 16px;
+    font-weight: 550;
+    margin: 0;
+  }
+  .panel-header p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 5px;
+  }
+
+  /* ---------- Badges ---------- */
+  .badge {
+    font-size: 11px;
+    line-height: 1.2;
+    padding: 6px 9px;
+    background: var(--soft);
+    border-radius: 7px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--muted);
+  }
+  .badge.purple {
+    color: var(--accent);
+    background: var(--purple);
+  }
+  .badge.green {
+    color: var(--green-text);
+    background: var(--green);
+  }
+  .badge.orange {
+    color: var(--orange-text);
+    background: var(--orange);
+  }
+  .badge.red {
+    color: var(--red-text);
+    background: var(--red);
+  }
+  .badge.outline {
+    background: transparent;
+    outline-color: var(--badge-ring);
+    border: 1px solid var(--border);
+    padding: 5px 8px;
+  }
+
+  /* ---------- Buttons ---------- */
+  .f-btn {
+    border: 1px solid var(--btn-border);
+    background: var(--btn);
+    color: var(--btn-text);
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 13px;
+    font-size: 14px;
+    line-height: 18px;
+    white-space: nowrap;
+    transition: 0.15s;
+  }
+  .f-btn:hover:not(:disabled) {
+    background: var(--hover);
+    border-color: var(--border-strong);
+  }
+  .f-btn.primary {
+    background: var(--text);
+    color: var(--surface);
+    border-color: var(--text);
+  }
+  .f-btn.primary:hover:not(:disabled) {
+    background: var(--text);
+    border-color: var(--text);
+    opacity: 0.85;
+  }
+  .f-btn.ghost {
+    border-color: transparent;
+    background: transparent;
+  }
+  .f-btn.ghost:hover:not(:disabled) {
+    background: var(--hover);
+    border-color: transparent;
+  }
+  .f-btn.danger {
+    background: var(--red);
+    color: var(--red-text);
+    border-color: transparent;
+  }
+  .f-btn.danger:hover:not(:disabled) {
+    border-color: var(--red-text);
+    background: var(--red);
+  }
+  .f-btn.sm {
+    padding: 6px 10px;
+    font-size: 12px;
+    gap: 6px;
+    border-radius: 8px;
+  }
+  .f-btn.lg {
+    padding: 11px 18px;
+    font-size: 14px;
+  }
+  .f-btn.icon {
+    padding: 8px;
+    width: 34px;
+    height: 34px;
+  }
+  .f-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .f-btn .f-icon {
+    width: 16px;
+    height: 16px;
+  }
+  .f-btn.icon .f-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* ---------- Form controls ---------- */
+  .f-control {
+    display: block;
+    width: 100%;
+    padding: 11px;
+    border-radius: 8px;
+    border: 1px solid var(--control-border);
+    background: var(--control);
+    color: var(--text);
+    font-size: 13px;
+    line-height: 18px;
+  }
+  .f-control:hover:not(:disabled, :focus, [aria-invalid='true'], .invalid),
+  .f-select:hover:not(:disabled, :focus) {
+    border-color: var(--control-border-hover);
+  }
+  .f-control:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .f-control[aria-invalid='true'],
+  .f-control.invalid {
+    border-color: var(--red-text);
+  }
+  /* Same look as .f-control but sized to its content, for selects in filter rows. */
+  .f-select {
+    height: 40px;
+    padding: 0 11px;
+    border-radius: 8px;
+    border: 1px solid var(--control-border);
+    background-color: var(--control);
+    color: var(--text);
+    font-size: 13px;
+    max-width: 100%;
+  }
+  .f-select:not(.w-full) {
+    max-width: min(100%, 380px);
+  }
+  .f-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  textarea.f-control {
+    min-height: 90px;
+    resize: vertical;
+  }
+  .f-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  /* ---------- Tables ---------- */
+  .table-wrap {
+    overflow: auto;
+    width: 100%;
+  }
+  .f-table {
+    border-collapse: collapse;
+    width: 100%;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .f-table th {
+    background: var(--table-head);
+    font-weight: 450;
+    color: var(--table-head-text);
+    text-align: left;
+    padding: 14px 21px;
+    font-size: 11px;
+  }
+  .f-table td {
+    padding: 17px 21px;
+    border-bottom: 1px dashed var(--border);
+    vertical-align: middle;
+  }
+  /* Compact column: as narrow as its content, so wide screens give the extra room to text columns. */
+  .f-table th.col-fit {
+    width: 1%;
+  }
+  .f-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .f-table tbody tr:hover {
+    background: var(--row-hover);
+  }
+  .table-foot {
+    padding: 17px 21px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .pagination {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .pagination .f-btn {
+    padding: 6px 10px;
+    min-width: 29px;
+    font-size: 11px;
+    line-height: 14px;
+  }
+  .pagination .f-btn.current {
+    background: var(--text);
+    color: var(--surface);
+    border-color: var(--text);
+  }
+
+  /* ---------- Tabs ---------- */
+  .tabs {
+    display: flex;
+    gap: 22px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 23px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs button {
+    border: 0;
+    border-radius: 0;
+    padding: 0 0 12px;
+    background: transparent;
+    color: var(--muted);
+    white-space: nowrap;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .tabs button:hover {
+    color: var(--text);
+  }
+  .tabs button.active {
+    border-bottom-color: var(--text);
+    color: var(--text);
+  }
+
+  /* ---------- Dialogs ---------- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: #10101455;
+    backdrop-filter: blur(5px);
+    display: grid;
+    place-items: center;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    z-index: 30;
+    padding: 24px;
+  }
+  .modal {
+    width: min(480px, 100%);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 24px 100px #0002;
+    overflow: hidden;
+  }
+  .modal.wide {
+    width: min(640px, 100%);
+  }
+  .modal-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 22px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .modal-heading h2 {
+    font-size: 16px;
+    font-weight: 550;
+    margin: 0;
+  }
+  .modal-body {
+    padding: 22px;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed;
+    bottom: 26px;
+    left: 50%;
+    transform: translate(-50%, 20px);
+    background: var(--text);
+    color: var(--surface);
+    padding: 12px 20px;
+    border-radius: 10px;
+    z-index: 50;
+    opacity: 0;
+    transition: 0.2s;
+    pointer-events: none;
+    font-size: 13px;
+    max-width: calc(100vw - 32px);
+  }
+  .toast.visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  /* ---------- Progress ---------- */
+  .progress {
+    height: 5px;
+    background: var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .progress > span {
+    height: 100%;
+    display: block;
+    background: var(--text);
+    border-radius: 20px;
+  }
+
+  /* ---------- Login ---------- */
+  .login {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 36px;
+    gap: 40px;
+    max-width: 1400px;
+    margin: auto;
+    width: 100%;
+  }
+  .login-story {
+    background: var(--side);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    padding: 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .login-story .story-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 21px;
+    font-weight: 650;
+    letter-spacing: -0.7px;
+  }
+  .login-story h1 {
+    font-size: 49px;
+    line-height: 1.12;
+    letter-spacing: -2px;
+    font-weight: 550;
+    margin-top: 100px;
+    max-width: 400px;
+  }
+  .login-story > p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.9;
+    max-width: 345px;
+    margin-top: 23px;
+  }
+  .login-story footer {
+    margin-top: auto;
+    padding-top: 40px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.4px;
+  }
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 30px 60px;
+    position: relative;
+  }
+  .login-form .theme-btn {
+    position: absolute;
+    right: 42px;
+    top: 42px;
+  }
+  .login-form h1 {
+    font-size: 30px;
+    font-weight: 550;
+    letter-spacing: -0.9px;
+    margin: 9px 0;
+  }
+  .login-form .intro {
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 26px;
+  }
+  .login-mobile-brand {
+    display: none;
+  }
+}
+
+/* ============================================================
+   Responsive rules (frontend.md §5 "Responsive rules"). Order matters.
+   Unlayered on purpose: a layered !important would beat the mobile override below.
+   ============================================================ */
+.mobile-menu {
+  display: none !important;
+}
+/* Compact laptop / tablet landscape: smaller gutter, slightly narrower sidebar, tighter padding. */
+@media (max-width: 1199px) {
+  .sidebar {
+    width: 213px;
+  }
+  .content {
+    padding: 24px;
+  }
+  .topbar {
+    padding: 0 24px;
+  }
+  .metric {
+    padding: 14px;
+  }
+  .metric-top {
+    font-size: 11px;
+  }
+  .login-form {
+    padding: 30px;
+  }
+}
+@media (max-width: 980px) {
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .topbar-title .crumb {
+    display: none;
+  }
+  .login {
+    gap: 20px;
+    padding: 20px;
+  }
+  .login-story {
+    padding: 25px;
+  }
+  .login-story h1 {
+    font-size: 39px;
+  }
+  .login-form {
+    padding: 20px;
+  }
+  .page-heading {
+    align-items: flex-start;
+  }
+}
+@media (max-width: 700px) {
+  .shell {
+    margin: 0;
+    border-radius: 0;
+    height: 100dvh;
+    border: 0;
+    box-shadow: none;
+  }
+  .sidebar {
+    display: none;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 20;
+    width: 240px;
+    height: 100dvh;
+    box-shadow: 20px 0 80px #0003;
+  }
+  .shell.menu-open .sidebar {
+    display: flex;
+  }
+  .shell.menu-open .drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 19;
+  }
+  .mobile-menu {
+    display: inline-flex !important;
+  }
+  .topbar {
+    padding: 0 16px;
+    height: 62px;
+  }
+  .content {
+    padding: 20px 16px;
+  }
+  .utility {
+    display: none;
+  }
+  .page-heading h1 {
+    font-size: 24px;
+  }
+  .page-heading {
+    flex-wrap: wrap;
+  }
+  .metrics {
+    gap: 10px;
+  }
+  .metric {
+    padding: 13px;
+  }
+  .metric-value {
+    font-size: 23px;
+  }
+  .table-foot {
+    padding: 14px;
+    flex-wrap: wrap;
+  }
+  .panel-header {
+    padding: 17px;
+  }
+  .topbar-right .role-label {
+    display: none;
+  }
+  .tabs {
+    gap: 18px;
+  }
+  .modal-overlay {
+    padding: 12px;
+  }
+  .login {
+    display: block;
+    padding: 20px;
+  }
+  .login-story {
+    display: none;
+  }
+  .login-form {
+    min-height: calc(100vh - 40px);
+    padding: 24px 5px;
+  }
+  .login-form .theme-btn {
+    right: 5px;
+    top: 24px;
+  }
+  .login-mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 650;
+    font-size: 23px;
+    letter-spacing: -0.7px;
+    margin-bottom: 60px;
+  }
+}
+@media (max-height: 800px) {
+  .sidebar .nav-label {
+    margin: 9px 12px 4px;
+  }
+}
+@media (max-height: 740px) {
+  .sidebar-brand {
+    height: 52px;
+    padding: 13px 22px;
+  }
+  .workspace-card .secondary {
+    display: none !important;
+  }
+}
+@media (max-height: 650px) {
+  .sidebar .nav-label {
+    margin: 7px 12px 3px;
+    font-size: 9px;
+  }
+  .sidebar .nav-item {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: 12px;
+  }
+}
+@media (max-height: 520px) {
+  .sidebar-brand {
+    height: 44px;
+    padding: 8px 22px;
+  }
+  .workspace-card {
+    margin-top: 6px;
+    margin-bottom: 4px;
+    padding: 5px 11px;
+  }
+  .sidebar .nav-label {
+    display: none;
+  }
+  .sidebar .nav-item {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    font-size: 11px;
+    line-height: 16px;
+  }
+  .sidebar .nav-item .f-icon {
+    width: 15px;
+    height: 15px;
+  }
 }
 
 /* Receipt printing (browser print — there is no backend PDF). Only the .print-area is printed. */
@@ -97,6 +1189,8 @@ input, textarea, select, button {
     width: 100%;
     border: none !important;
     box-shadow: none !important;
+    background: #fff !important;
+    color: #000 !important;
   }
   .no-print {
     display: none !important;

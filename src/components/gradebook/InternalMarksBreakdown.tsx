@@ -29,26 +29,26 @@ function SourceList({ entry, types }: { entry: InternalMark; types: AssessmentTy
     .filter((g) => g.results.length > 0);
 
   if (groups.length === 0) {
-    return <p className="text-xs text-[#9A9A9A]">No finalized assessments yet.</p>;
+    return <p className="text-xs text-muted">No finalized assessments yet.</p>;
   }
   return (
     <div className="space-y-3">
       {groups.map(({ type, results }) => (
         <div key={type}>
-          <p className="text-xs font-semibold text-[#666666] mb-1">{ASSESSMENT_TYPE_LABELS[type]}</p>
-          <ul className="divide-y divide-[#F5F5F5] border border-[#F0F0F0] rounded-lg">
+          <p className="text-xs font-[550] text-muted mb-1">{ASSESSMENT_TYPE_LABELS[type]}</p>
+          <ul className="divide-y divide-line border border-line rounded-lg">
             {results.map((r) => {
               const badge = GRADE_STATUS_BADGE[r.gradeStatus];
               return (
                 <li key={r.assessmentId} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
                   <div className="min-w-0">
-                    <p className="text-[#111111] truncate">{r.title}</p>
-                    <p className="text-[11px] text-[#9A9A9A]">{formatDate(r.assessmentDate)}</p>
+                    <p className="text-fg truncate">{r.title}</p>
+                    <p className="text-[11px] text-muted">{formatDate(r.assessmentDate)}</p>
                   </div>
                   <div className="text-right whitespace-nowrap">
                     {r.gradeStatus === 'GRADED' ? (
-                      <span className="font-semibold">
-                        {formatMarks(r.marks)} <span className="text-[#9A9A9A] font-normal">/ {formatMarks(r.maxMarks)}</span>
+                      <span className="font-[550]">
+                        {formatMarks(r.marks)} <span className="text-muted font-normal">/ {formatMarks(r.maxMarks)}</span>
                       </span>
                     ) : (
                       <Badge variant={badge.variant}>{badge.label}</Badge>
@@ -66,8 +66,8 @@ function SourceList({ entry, types }: { entry: InternalMark; types: AssessmentTy
 
 function TotalTile({ label, value, outOf }: { label: string; value: number | null; outOf?: number }) {
   return (
-    <div className="p-3 bg-[#FAFAFA] border border-[#E8E8E8] rounded-[10px]">
-      <p className="text-[10px] font-semibold text-[#9A9A9A] uppercase tracking-wider">
+    <div className="p-3 bg-soft border border-line rounded-[10px]">
+      <p className="text-[10px] font-[550] text-muted uppercase tracking-wider">
         {label}{outOf ? ` / ${outOf}` : ''}
       </p>
       <div className="mt-1 text-lg"><PendingTotal value={value} outOf={outOf} /></div>
@@ -108,12 +108,12 @@ export function InternalMarksBreakdown({ entry, practical }: { entry: InternalMa
         <TotalTile label="Total" value={entry.totalInternalMarks} outOf={100} />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 border border-[#E8E8E8] rounded-[10px]">
-          <p className="text-sm font-semibold text-[#111111] mb-3">Theory</p>
+        <div className="p-4 border border-line rounded-[10px]">
+          <p className="text-sm font-[550] text-fg mb-3">Theory</p>
           <SourceList entry={entry} types={THEORY_SOURCE_TYPES} />
         </div>
-        <div className="p-4 border border-[#E8E8E8] rounded-[10px]">
-          <p className="text-sm font-semibold text-[#111111] mb-3">Practical</p>
+        <div className="p-4 border border-line rounded-[10px]">
+          <p className="text-sm font-[550] text-fg mb-3">Practical</p>
           <SourceList entry={entry} types={PRACTICAL_SOURCE_TYPES} />
         </div>
       </div>

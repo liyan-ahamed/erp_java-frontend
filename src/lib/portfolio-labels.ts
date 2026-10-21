@@ -17,6 +17,15 @@ export const ACTIVITY_TYPES: PortfolioActivityType[] = [
   'CONFERENCE', 'TECHNICAL_EVENT', 'PROJECT_SHOWCASE', 'CLUB_ACTIVITY', 'OTHER',
 ];
 
+/**
+ * Activity types offered in the STAFF review filter. Workshop, Conference, Technical Event, Club Activity and
+ * Other are left out of that filter only: they stay valid types, existing entries keep them, and
+ * "All Activity Types" still returns them.
+ */
+export const STAFF_REVIEW_FILTER_TYPES: PortfolioActivityType[] = ACTIVITY_TYPES.filter(
+  (t) => !(['WORKSHOP', 'CONFERENCE', 'TECHNICAL_EVENT', 'CLUB_ACTIVITY', 'OTHER'] as PortfolioActivityType[]).includes(t),
+);
+
 export const ACTIVITY_TYPE_LABELS: Record<PortfolioActivityType, string> = {
   HACKATHON: 'Hackathon',
   CERTIFICATION: 'Certification',

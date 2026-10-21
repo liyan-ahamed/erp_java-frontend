@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
-import { ArrowLeft, CheckCheck, CheckCircle2, Pencil, Save, Trash2, Users } from 'lucide-react';
+import { ArrowLeft, CheckCheck, CheckCircle2, Pencil, Save, Trash2, Users } from '@/components/ui/icons';
 import { PageContainer } from '@/components/common/PageContainer';
 import { RequireRole } from '@/components/common/RequireRole';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -39,10 +39,11 @@ const sameDraft = (a: RowDraft, b: RowDraft) => a.status === b.status && a.remar
 
 function StatusPicker({ value, onChange, name }: { value: AttendanceRecordStatus; onChange: (s: AttendanceStatus) => void; name: string }) {
   return (
-    <div role="radiogroup" aria-label={`Attendance for ${name}`} className="inline-flex rounded-lg border border-[#E8E8E8] overflow-hidden">
+    <div role="radiogroup" aria-label={`Attendance for ${name}`} className="inline-flex rounded-lg border border-line overflow-hidden">
       {ATTENDANCE_STATUSES.map((s) => {
         const active = value === s;
-        const tone = s === 'PRESENT' ? 'bg-green-600' : s === 'ABSENT' ? 'bg-red-600' : s === 'ON_DUTY' ? 'bg-blue-600' : 'bg-amber-600';
+        // Forma status colours: green present, red absent, purple on duty, orange otherwise.
+        const tone = s === 'PRESENT' ? 'bg-ok-soft text-ok' : s === 'ABSENT' ? 'bg-danger-soft text-danger' : s === 'ON_DUTY' ? 'bg-accent-soft text-accent' : 'bg-warn-soft text-warn';
         return (
           <button
             key={s}
@@ -50,8 +51,8 @@ function StatusPicker({ value, onChange, name }: { value: AttendanceRecordStatus
             role="radio"
             aria-checked={active}
             onClick={() => onChange(s)}
-            className={`px-2.5 h-8 text-xs font-medium whitespace-nowrap border-l first:border-l-0 border-[#E8E8E8] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] ${
-              active ? `${tone} text-white` : 'bg-white text-[#666666] hover:bg-[#F5F5F5]'
+            className={`px-2.5 h-8 text-xs whitespace-nowrap border-l first:border-l-0 border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+              active ? `${tone} font-[550]` : 'bg-surface text-muted hover:bg-soft'
             }`}
           >
             {ATTENDANCE_STATUS_BADGE[s].label}
@@ -152,8 +153,8 @@ function TakeAttendanceView() {
     return (
       <PageContainer>
         <div className="space-y-4">
-          <Link href={ROUTES.ATTENDANCE} className="inline-flex items-center text-sm text-[#666666] hover:text-[#111111]">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Back to attendance
+          <Link href={ROUTES.ATTENDANCE} className="inline-flex items-center gap-2 text-[12px] text-muted hover:text-fg">
+            <ArrowLeft className="w-[13px] h-[13px]" /> Back to attendance
           </Link>
           <ErrorBanner error={error} fallback="Unable to load this attendance session." title="Error Loading Session" />
         </div>
@@ -171,8 +172,8 @@ function TakeAttendanceView() {
   return (
     <PageContainer rawLayout>
       <div className="space-y-6">
-        <button onClick={() => (dirty ? setConfirm('leave') : router.push(ROUTES.ATTENDANCE))} className="inline-flex items-center text-sm text-[#666666] hover:text-[#111111]">
-          <ArrowLeft className="w-4 h-4 mr-1" /> Back to attendance
+        <button onClick={() => (dirty ? setConfirm('leave') : router.push(ROUTES.ATTENDANCE))} className="inline-flex items-center gap-2 text-[12px] text-muted hover:text-fg">
+          <ArrowLeft className="w-[13px] h-[13px]" /> Back to attendance
         </button>
         {confirm === 'leave' && (
           <ConfirmBox message="You have unsaved attendance. Leave without saving?" confirmLabel="Leave" variant="danger"
@@ -185,19 +186,19 @@ function TakeAttendanceView() {
               <CardContent className="p-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-lg font-bold text-[#111111]">{session.subjectName}</h2>
-                    <span className="font-mono text-xs text-[#9A9A9A]">{session.subjectCode}</span>
+                    <h2 className="text-lg font-[650] text-fg">{session.subjectName}</h2>
+                    <span className="font-mono text-xs text-muted">{session.subjectCode}</span>
                     <StatusBadge info={SESSION_STATUS_BADGE[session.status]} />
                   </div>
-                  <p className="text-sm text-[#666666] mt-1">
+                  <p className="text-sm text-muted mt-1">
                     {formatDate(session.attendanceDate)} · {session.periodNumber ? `Period ${session.periodNumber}` : 'No period'} · Section {session.sectionName}
                   </p>
-                  <p className="text-xs text-[#9A9A9A] mt-1">Topic: {session.topic ?? '—'} · Staff: {session.staffName}</p>
+                  <p className="text-xs text-muted mt-1">Topic: {session.topic ?? '—'} · Staff: {session.staffName}</p>
                 </div>
                 {editable && (
                   <div className="flex gap-2">
-                    <Button size="sm" variant="secondary" onClick={() => setEditingSession(true)}><Pencil className="w-3.5 h-3.5 mr-1.5" /> Edit Details</Button>
-                    <Button size="sm" variant="ghost" onClick={() => { removeSession.reset(); setConfirm('delete'); }}><Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setEditingSession(true)}><Pencil className="w-3.5 h-3.5" /> Edit Details</Button>
+                    <Button size="sm" variant="ghost" onClick={() => { removeSession.reset(); setConfirm('delete'); }}><Trash2 className="w-3.5 h-3.5" /> Delete</Button>
                   </div>
                 )}
               </CardContent>
@@ -224,20 +225,20 @@ function TakeAttendanceView() {
               <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 space-y-0">
                 <div>
                   <CardTitle className="text-base">{editable ? 'Take Attendance' : 'Attendance'}</CardTitle>
-                  <p className="text-xs text-[#9A9A9A] mt-1">{data.records.length} students</p>
+                  <p className="text-xs text-muted mt-1">{data.records.length} students</p>
                 </div>
                 {editable && (
                   <div className="flex items-center gap-2 flex-wrap">
                     {dirty && <Badge variant="warning">{changedIds.length} unsaved change{changedIds.length === 1 ? '' : 's'}</Badge>}
-                    <Button size="sm" variant="secondary" onClick={markAllPresent}><CheckCheck className="w-3.5 h-3.5 mr-1.5" /> Mark All Present</Button>
+                    <Button size="sm" variant="secondary" onClick={markAllPresent}><CheckCheck className="w-3.5 h-3.5" /> Mark All Present</Button>
                     {dirty && <Button size="sm" variant="ghost" onClick={() => setConfirm('discard')} disabled={saveRecords.isPending}>Discard</Button>}
                     <Button size="sm" onClick={onSave} isLoading={saveRecords.isPending} disabled={!dirty}>
-                      {!saveRecords.isPending && <Save className="w-3.5 h-3.5 mr-1.5" />} Save Draft
+                      {!saveRecords.isPending && <Save className="w-3.5 h-3.5" />} Save Draft
                     </Button>
                     <Button size="sm" variant="outline" disabled={dirty || saveRecords.isPending}
                       title={dirty ? 'Save or discard your changes before finalizing' : undefined}
                       onClick={() => { finalize.reset(); setConfirm('finalize'); }}>
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Finalize
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Finalize
                     </Button>
                   </div>
                 )}
@@ -265,10 +266,10 @@ function TakeAttendanceView() {
                 {savedMessage && <SuccessNote>{savedMessage}</SuccessNote>}
                 {finalize.isSuccess && <SuccessNote>Session finalized. It is now locked.</SuccessNote>}
                 {editable && dirty && unmarkedLocally > 0 && (
-                  <p className="text-xs text-[#92400E]">{unmarkedLocally} student{unmarkedLocally === 1 ? ' is' : 's are'} still not marked. Unmarked students are never marked absent automatically.</p>
+                  <p className="text-xs text-warn">{unmarkedLocally} student{unmarkedLocally === 1 ? ' is' : 's are'} still not marked. Unmarked students are never marked absent automatically.</p>
                 )}
                 {saveRecords.isError && (
-                  <div className="rounded-[10px] bg-red-50 p-3 text-sm text-red-600 border border-red-100" role="alert">
+                  <div className="rounded-[10px] bg-danger-soft p-3 text-sm text-danger border border-danger/20" role="alert">
                     {serverErrors.byStudent.size > 0 || serverErrors.other.length > 0 ? (
                       <>
                         <p className="font-medium">{serverErrors.message}</p>
@@ -279,7 +280,7 @@ function TakeAttendanceView() {
                   </div>
                 )}
                 {finalize.isError && (
-                  <div className="rounded-[10px] bg-red-50 p-3 text-sm text-red-600 border border-red-100" role="alert">
+                  <div className="rounded-[10px] bg-danger-soft p-3 text-sm text-danger border border-danger/20" role="alert">
                     <p className="font-medium">
                       {axios.isAxiosError<ApiResponse>(finalizeError) && finalizeError.response?.data?.message
                         ? finalizeError.response.data.message
@@ -316,13 +317,13 @@ function TakeAttendanceView() {
                           const problem = serverErrors.byStudent.get(r.studentId);
                           const rowEditable = editable && r.inRoster;
                           return (
-                            <TableRow key={r.studentId} className={problem ? 'bg-red-50/60' : changed ? 'bg-[#FFFBEB]' : ''}>
-                              <TableCell className="text-[#9A9A9A] text-xs">{index + 1}</TableCell>
+                            <TableRow key={r.studentId} className={problem ? 'bg-danger-soft' : changed ? 'bg-warn-soft' : ''}>
+                              <TableCell className="text-muted text-xs">{index + 1}</TableCell>
                               <TableCell className="font-mono text-xs whitespace-nowrap">{r.registerNumber}</TableCell>
                               <TableCell>
                                 <div className="font-medium whitespace-nowrap">{r.studentName}</div>
-                                {!r.inRoster && <div className="text-[11px] text-[#9A9A9A]">No longer enrolled</div>}
-                                {problem && <div className="text-xs text-red-600 mt-0.5">{problem}</div>}
+                                {!r.inRoster && <div className="text-[11px] text-muted">No longer enrolled</div>}
+                                {problem && <div className="text-xs text-danger mt-0.5">{problem}</div>}
                               </TableCell>
                               <TableCell>
                                 {rowEditable ? (
@@ -335,9 +336,9 @@ function TakeAttendanceView() {
                                 {rowEditable ? (
                                   <input type="text" maxLength={255} aria-label={`Remarks for ${r.studentName}`} value={draft.remarks}
                                     onChange={(e) => updateRow(r, { remarks: e.target.value })}
-                                    className="h-9 w-full min-w-40 px-2 text-sm border border-[#E8E8E8] rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#111111]" />
+                                    className="h-9 w-full min-w-40 px-2 text-sm border border-line rounded-lg bg-surface focus:outline-none focus:ring-1 focus:ring-accent" />
                                 ) : (
-                                  <span className="text-[#666666] text-sm">{r.remarks || '—'}</span>
+                                  <span className="text-muted text-sm">{r.remarks || '—'}</span>
                                 )}
                               </TableCell>
                             </TableRow>

@@ -2,10 +2,13 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   DASHBOARD: '/dashboard',
+  COURSES: '/dashboard/courses',
+  /** Old route — redirects to Courses → Enrollments. */
   COURSE_ENROLLMENT: '/dashboard/course-enrollment',
   TIMETABLE: '/dashboard/timetable',
   ATTENDANCE: '/dashboard/attendance',
   ATTENDANCE_SESSION: (id: number) => `/dashboard/attendance/sessions/${id}`,
+  /** Retired — redirects to Courses. */
   LESSON_PLAN: '/dashboard/lesson-plan',
   FEES: '/dashboard/fees',
   RECEIPTS: '/dashboard/receipts',
@@ -15,7 +18,9 @@ export const ROUTES = {
   NOTIFICATIONS: '/dashboard/notifications',
   AUDIT_LOG: '/dashboard/audit-log',
   USERS: '/dashboard/users',
+  /** Old route — redirects to Courses → Subject Catalog. */
   SUBJECTS: '/dashboard/subjects',
+  /** Old route — redirects to Courses → Class Courses. */
   SUBJECT_OFFERINGS: '/dashboard/subject-offerings',
   ASSESSMENTS: '/dashboard/assessments',
   INTERNAL_MARKS: '/dashboard/internal-marks',
@@ -25,4 +30,5 @@ export const ROUTES = {
   PORTFOLIO_REVIEW: '/dashboard/portfolio/review',
   PORTFOLIO_ANALYTICS: '/dashboard/portfolio/analytics',
   PORTFOLIO_STUDENT: (studentId: number) => `/dashboard/portfolio/students/${studentId}`,
+  SETTINGS: '/dashboard/settings',
 } as const;

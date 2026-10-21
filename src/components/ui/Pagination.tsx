@@ -1,5 +1,3 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from './Button';
 import { PaginatedResponse } from '@/types/api';
 
 interface PaginationProps {
@@ -7,7 +5,7 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-/** Footer pager for server-paginated tables. Shows up to 5 page buttons around the current page. */
+/** Forma table footer for server-paginated tables. Shows up to 5 page buttons around the current page. */
 export const Pagination = ({ data, onPageChange }: PaginationProps) => {
   if (data.totalPages <= 1) return null;
 
@@ -16,28 +14,35 @@ export const Pagination = ({ data, onPageChange }: PaginationProps) => {
   const pages = Array.from({ length: Math.min(data.totalPages, 5) }, (_, i) => start + i);
 
   return (
-    <div className="flex items-center justify-between px-6 py-4 border-t border-[#F5F5F5]">
-      <span className="text-xs text-[#9A9A9A]">
-        Showing {current * data.size + 1}–{Math.min(current * data.size + data.content.length, data.totalElements)} of {data.totalElements}
+    <div className="table-foot">
+      <span>
+        Showing {current * data.size + 1}–{Math.min(current * data.size + data.content.length, data.totalElements)} of{' '}
+        {data.totalElements} records
       </span>
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="sm" disabled={current === 0} onClick={() => onPageChange(current - 1)}>
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
+      <div className="pagination">
+        <button type="button" className="f-btn" disabled={current === 0} onClick={() => onPageChange(current - 1)} aria-label="Previous page">
+          ‹
+        </button>
         {pages.map((page) => (
-          <Button
+          <button
+            type="button"
             key={page}
-            variant={page === current ? 'primary' : 'ghost'}
-            size="sm"
+            className={`f-btn ${page === current ? 'current' : ''}`}
+            aria-current={page === current ? 'page' : undefined}
             onClick={() => onPageChange(page)}
-            className="w-8 h-8 p-0"
           >
             {page + 1}
-          </Button>
+          </button>
         ))}
-        <Button variant="ghost" size="sm" disabled={current >= data.totalPages - 1} onClick={() => onPageChange(current + 1)}>
-          <ChevronRight className="w-4 h-4" />
-        </Button>
+        <button
+          type="button"
+          className="f-btn"
+          disabled={current >= data.totalPages - 1}
+          onClick={() => onPageChange(current + 1)}
+          aria-label="Next page"
+        >
+          ›
+        </button>
       </div>
     </div>
   );

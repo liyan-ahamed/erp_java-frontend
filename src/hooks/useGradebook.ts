@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/query-keys';
 import { fetchAllPages } from '@/lib/pagination';
 import { subjectService } from '@/services/api/subject.service';
@@ -8,6 +8,7 @@ import { assessmentService } from '@/services/api/assessment.service';
 import { gradebookService } from '@/services/api/gradebook.service';
 import { internalMarksService } from '@/services/api/internal-marks.service';
 import { userService } from '@/services/api/user.service';
+import { academicService } from '@/services/api/academic.service';
 import {
   AssessmentListQuery,
   BulkGradeRequest,
@@ -128,6 +129,35 @@ export const useAssessments = (query: AssessmentListQuery, enabled = true) =>
     ...NO_POLLING,
   });
 
+/** Every assessment the user can see (STAFF: their own), all semesters — the staff overview filters in the browser. */
+export const useAllAssessments = (enabled = true) =>
+  useQuery({
+    queryKey: [QUERY_KEYS.ASSESSMENTS, 'all'],
+    queryFn: () => fetchAllPages((page, size) => assessmentService.getAssessments({ page, size })),
+    enabled,
+    ...NO_POLLING,
+  });
+
+/** GET /summary for several assessments at once (one request each; contract §I3 proposes embedding it). */
+export const useAssessmentSummaries = (ids: number[]) =>
+  useQueries({
+    queries: ids.map((id) => ({
+      queryKey: [QUERY_KEYS.ASSESSMENT_SUMMARY, id],
+      queryFn: () => gradebookService.getSummary(id),
+      ...NO_POLLING,
+    })),
+  });
+
+/** Class size per section from the roster's total (contract A), until offerings carry `studentCount` (§G2). */
+export const useSectionSizes = (sectionIds: number[]) =>
+  useQueries({
+    queries: sectionIds.map((sectionId) => ({
+      queryKey: [QUERY_KEYS.SECTION_STUDENTS, sectionId, 'size'],
+      queryFn: async () => (await academicService.getSectionStudents(sectionId, 0, 1)).totalElements,
+      ...NO_POLLING,
+    })),
+  });
+
 export const useCreateAssessment = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -204,6 +234,22 @@ export const useSaveGrades = () => {
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ASSESSMENT_GRADES, assessmentId] }),
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ASSESSMENT_SUMMARY, assessmentId] }),
       ]),
+  });
+};
+
+/**
+ * Autosave for the marks entry screen: saves changed rows only and does not refetch the gradebook (the screen
+ * already holds the values it sent). The list and summary are marked stale and refresh when next shown.
+ */
+export const useAutosaveGrades = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ assessmentId, payload }: { assessmentId: number; payload: BulkGradeRequest }) =>
+      gradebookService.saveGrades(assessmentId, payload),
+    onSuccess: (_result, { assessmentId }) => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ASSESSMENT_SUMMARY, assessmentId], refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ASSESSMENT_GRADES, assessmentId], refetchType: 'none' });
+    },
   });
 };
 

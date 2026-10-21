@@ -1,6 +1,9 @@
-import { ReactNode } from 'react';
+'use client';
+
+import { ReactNode, useEffect, useRef } from 'react';
+import { useToast } from '@/providers/toast-provider';
 import axios from 'axios';
-import { Lock } from 'lucide-react';
+import { CheckCircle2, Lock } from '@/components/ui/icons';
 import { Badge, BadgeProps } from '@/components/ui/Badge';
 import { ApiResponse } from '@/types/api';
 
@@ -11,27 +14,40 @@ export function StatusBadge({ info }: { info: { label: string; variant: BadgePro
   return <Badge variant={info.variant}>{info.label}</Badge>;
 }
 
+/** Forma metric tile (label, large value, muted caption). Grids of these keep their page layout. */
 export function StatTile({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }) {
   return (
-    <div className="p-4 bg-white border border-[#E8E8E8] rounded-[10px]">
-      <p className="text-[10px] font-semibold text-[#9A9A9A] uppercase tracking-wider">{label}</p>
-      <div className="text-xl font-bold text-[#111111] mt-1 break-words">{value}</div>
-      {hint && <div className="text-[11px] text-[#9A9A9A] mt-0.5">{hint}</div>}
+    <div className="metric">
+      <div className="metric-top text-fg">{label}</div>
+      <div className="metric-value !text-[22px]">{value}</div>
+      {hint && <div className="metric-sub">{hint}</div>}
     </div>
   );
 }
 
-/** Grey info strip explaining why something is read-only. */
+/** Muted info strip explaining why something is read-only. */
 export function ReadOnlyNote({ children }: { children: ReactNode }) {
   return (
-    <div className="flex items-center gap-2 rounded-[10px] bg-[#F5F5F5] border border-[#E8E8E8] p-3 text-sm text-[#666666]">
-      <Lock className="w-4 h-4 flex-shrink-0" /> <span>{children}</span>
+    <div className="flex items-center gap-[10px] rounded-[12px] bg-soft px-[14px] py-3 text-[12px] text-muted">
+      <Lock className="w-4 h-4" /> <span>{children}</span>
     </div>
   );
 }
 
+/** Inline success message that stays on screen; the same text is also shown as a Forma toast. */
 export function SuccessNote({ children }: { children: ReactNode }) {
-  return <p className="text-sm text-green-700" role="status">{children}</p>;
+  const ref = useRef<HTMLParagraphElement>(null);
+  const toast = useToast();
+  const text = typeof children === 'string' ? children : undefined;
+  useEffect(() => {
+    const message = ref.current?.textContent?.trim();
+    if (message) toast(message);
+  }, [toast, text]);
+  return (
+    <p ref={ref} className="inline-flex items-center gap-2 rounded-[8px] bg-ok-soft text-ok px-3 py-2 text-[12px]" role="status">
+      <CheckCircle2 className="w-4 h-4" /> {children}
+    </p>
+  );
 }
 
 /** Wrapper for filter rows in a page's context area. */

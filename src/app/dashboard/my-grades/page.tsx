@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { GraduationCap } from 'lucide-react';
+import { GraduationCap } from '@/components/ui/icons';
 import { PageContainer } from '@/components/common/PageContainer';
 import { RequireRole } from '@/components/common/RequireRole';
 import { Card } from '@/components/ui/Card';
@@ -14,9 +14,9 @@ import {
   ASSESSMENT_TYPE_LABELS,
   GRADE_STATUS_BADGE,
   SELECT_CLASS,
-  SUBJECT_TYPE_LABELS,
   formatDate,
   formatMarks,
+  subjectTypeLabel,
 } from '@/lib/gradebook-labels';
 import { StudentGradeView } from '@/types/gradebook';
 import { isGradebookEnabled } from '@/lib/feature-flags';
@@ -32,8 +32,8 @@ const percentOf = (g: StudentGradeView) =>
 function GradeCell({ g }: { g: StudentGradeView }) {
   if (g.gradeStatus === 'GRADED') {
     return (
-      <span className="font-semibold">
-        {formatMarks(g.marks)} <span className="text-[#9A9A9A] font-normal">/ {formatMarks(g.maxMarks)}</span>
+      <span className="font-[550]">
+        {formatMarks(g.marks)} <span className="text-muted font-normal">/ {formatMarks(g.maxMarks)}</span>
       </span>
     );
   }
@@ -99,13 +99,13 @@ function MyGradesView() {
             const first = rows[0];
             return (
               <Card key={first.subjectOfferingId}>
-                <div className="px-6 py-4 border-b border-[#F5F5F5]">
+                <div className="px-6 py-4 border-b border-line">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-semibold text-[#111111]">{first.subjectName}</h3>
-                    <span className="font-mono text-xs text-[#9A9A9A]">{first.subjectCode}</span>
-                    <Badge variant="outline">{SUBJECT_TYPE_LABELS[first.subjectType]}</Badge>
+                    <h3 className="text-base font-[550] text-fg">{first.subjectName}</h3>
+                    <span className="font-mono text-xs text-muted">{first.subjectCode}</span>
+                    <Badge variant="outline">{subjectTypeLabel(first.subjectType)}</Badge>
                   </div>
-                  <p className="text-xs text-[#9A9A9A] mt-0.5">Semester {first.semester} · {first.academicYear}</p>
+                  <p className="text-xs text-muted mt-0.5">Semester {first.semester} · {first.academicYear}</p>
                 </div>
                 <div className="overflow-x-auto">
                   <Table>
@@ -125,12 +125,12 @@ function MyGradesView() {
                           <TableRow key={g.assessmentId}>
                             <TableCell>
                               <div className="font-medium">{g.assessmentTitle}</div>
-                              {g.remarks && <div className="text-xs text-[#9A9A9A] mt-0.5">{g.remarks}</div>}
+                              {g.remarks && <div className="text-xs text-muted mt-0.5">{g.remarks}</div>}
                             </TableCell>
-                            <TableCell className="text-[#666666]">{ASSESSMENT_TYPE_LABELS[g.assessmentType]}</TableCell>
-                            <TableCell className="text-[#666666] whitespace-nowrap">{formatDate(g.assessmentDate)}</TableCell>
+                            <TableCell className="text-muted">{ASSESSMENT_TYPE_LABELS[g.assessmentType]}</TableCell>
+                            <TableCell className="text-muted whitespace-nowrap">{formatDate(g.assessmentDate)}</TableCell>
                             <TableCell className="whitespace-nowrap"><GradeCell g={g} /></TableCell>
-                            <TableCell className="text-right text-[#666666]">{pct === null ? '—' : `${pct}%`}</TableCell>
+                            <TableCell className="text-right text-muted">{pct === null ? '—' : `${pct}%`}</TableCell>
                           </TableRow>
                         );
                       })}

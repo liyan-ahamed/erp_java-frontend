@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, ExternalLink, Pencil, RefreshCw, Trophy } from 'lucide-react';
+import { Check, ExternalLink, Pencil, RefreshCw, Trophy } from '@/components/ui/icons';
 import { useAuth } from '@/contexts/auth-context';
 import {
   useFetchLeetCodeSection,
@@ -29,7 +29,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { getApiErrorMessage } from '@/lib/api-error';
 
 const SELECT_CLASS =
-  'h-10 min-w-44 px-3 text-sm border border-[#E8E8E8] rounded-[10px] bg-white text-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] disabled:opacity-50 disabled:cursor-not-allowed';
+  'f-select min-w-44';
 
 const STATUS_BADGE: Record<LeetCodeSyncStatus, { label: string; variant: BadgeProps['variant'] }> = {
   SYNCED: { label: 'Synced', variant: 'success' },
@@ -49,7 +49,7 @@ const editableUrl = (student: LeetCodeStudentStats) =>
 
 function ProfileLink({ student }: { student: LeetCodeStudentStats }) {
   if (student.profileUrl === URL_NOT_PROVIDED) {
-    return <span className="text-xs font-semibold text-[#9A9A9A]">{URL_NOT_PROVIDED}</span>;
+    return <span className="text-xs font-[550] text-muted">{URL_NOT_PROVIDED}</span>;
   }
   const href = /^https?:\/\//i.test(student.profileUrl) ? student.profileUrl : `https://${student.profileUrl}`;
   return (
@@ -57,7 +57,7 @@ function ProfileLink({ student }: { student: LeetCodeStudentStats }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-[#2563EB] hover:underline break-all"
+      className="inline-flex items-center gap-1 text-accent hover:underline break-all"
     >
       {student.username ?? student.profileUrl}
       <ExternalLink className="w-3 h-3 shrink-0" />
@@ -183,22 +183,22 @@ function SectionStatsView() {
               </select>
             </div>
             <Button onClick={onFetch} disabled={!year || !section || isEditing} isLoading={fetchSection.isPending}>
-              {!fetchSection.isPending && <RefreshCw className="w-4 h-4 mr-2" />}
+              {!fetchSection.isPending && <RefreshCw className="w-4 h-4" />}
               {fetchSection.isPending ? 'Fetching...' : 'Fetch Data'}
             </Button>
             <Button variant="outline" onClick={onTopCount} disabled={!year} isLoading={top.isFetching && !top.isFetchingNextPage}>
-              {!(top.isFetching && !top.isFetchingNextPage) && <Trophy className="w-4 h-4 mr-2" />}
+              {!(top.isFetching && !top.isFetchingNextPage) && <Trophy className="w-4 h-4" />}
               Top Count
             </Button>
           </div>
-          {filtersError && <p className="mt-4 text-sm text-red-600">Unable to load years and sections.</p>}
+          {filtersError && <p className="mt-4 text-sm text-danger">Unable to load years and sections.</p>}
           {fetchSection.isPending && (
-            <p className="mt-4 text-sm text-[#666666]">
+            <p className="mt-4 text-sm text-muted">
               Fetching the latest statistics from LeetCode for this section. This can take up to a minute.
             </p>
           )}
           {fetchSection.isError && (
-            <p className="mt-4 text-sm text-red-600">
+            <p className="mt-4 text-sm text-danger">
               {getApiErrorMessage(fetchSection.error, 'Unable to fetch LeetCode statistics.')}
             </p>
           )}
@@ -221,11 +221,11 @@ function SectionStatsView() {
                 <Spinner size="lg" />
               </div>
             ) : top.isError ? (
-              <p className="p-8 text-center text-sm text-red-600">
+              <p className="p-8 text-center text-sm text-danger">
                 {getApiErrorMessage(top.error, 'Unable to load the top count.')}
               </p>
             ) : topStudents.length === 0 ? (
-              <p className="p-8 text-center text-sm text-[#666666]">
+              <p className="p-8 text-center text-sm text-muted">
                 No LeetCode statistics saved for this year yet. Fetch Data for a section first.
               </p>
             ) : (
@@ -246,20 +246,20 @@ function SectionStatsView() {
                   <TableBody>
                     {topStudents.map((student) => (
                       <TableRow key={student.studentId}>
-                        <TableCell className="font-semibold">#{student.rank}</TableCell>
+                        <TableCell className="font-[550]">#{student.rank}</TableCell>
                         <TableCell className="font-medium">{student.name}</TableCell>
-                        <TableCell className="text-[#666666]">Section {student.section}</TableCell>
-                        <TableCell className="text-right font-semibold">{student.totalSolved}</TableCell>
+                        <TableCell className="text-muted">Section {student.section}</TableCell>
+                        <TableCell className="text-right font-[550]">{student.totalSolved}</TableCell>
                         <TableCell className="text-right">{formatCount(student.easySolved)}</TableCell>
                         <TableCell className="text-right">{formatCount(student.mediumSolved)}</TableCell>
                         <TableCell className="text-right">{formatCount(student.hardSolved)}</TableCell>
-                        <TableCell className="whitespace-nowrap text-[#666666]">{formatSynced(student.lastSyncedAt)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-muted">{formatSynced(student.lastSyncedAt)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-                <div className="flex items-center justify-between gap-4 px-6 py-4 border-t border-[#E8E8E8]">
-                  <span className="text-sm text-[#666666]">
+                <div className="flex items-center justify-between gap-4 px-6 py-4 border-t border-line">
+                  <span className="text-sm text-muted">
                     Showing {topStudents.length} of {totalRanked}
                   </span>
                   {top.hasNextPage && (
@@ -291,25 +291,25 @@ function SectionStatsView() {
               {result.students.length > 0 &&
                 (isEditing ? (
                   <Button onClick={onDone} isLoading={updateUrls.isPending}>
-                    {!updateUrls.isPending && <Check className="w-4 h-4 mr-2" />}
+                    {!updateUrls.isPending && <Check className="w-4 h-4" />}
                     {updateUrls.isPending ? 'Saving...' : 'DONE'}
                   </Button>
                 ) : (
                   <Button variant="outline" onClick={onEdit}>
-                    <Pencil className="w-4 h-4 mr-2" />
+                    <Pencil className="w-4 h-4" />
                     Edit
                   </Button>
                 ))}
             </div>
             {updateUrls.isError && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-danger">
                 {getApiErrorMessage(updateUrls.error, 'Unable to save LeetCode URLs.')}
               </p>
             )}
           </CardHeader>
           <CardContent className="p-0">
             {result.students.length === 0 ? (
-              <p className="p-8 text-center text-sm text-[#666666]">No students found in this section.</p>
+              <p className="p-8 text-center text-sm text-muted">No students found in this section.</p>
             ) : (
               <Table>
                 <TableHeader>
@@ -344,11 +344,11 @@ function SectionStatsView() {
                           <ProfileLink student={student} />
                         )}
                       </TableCell>
-                      <TableCell className="text-right font-semibold">{formatCount(student.totalSolved)}</TableCell>
+                      <TableCell className="text-right font-[550]">{formatCount(student.totalSolved)}</TableCell>
                       <TableCell className="text-right">{formatCount(student.easySolved)}</TableCell>
                       <TableCell className="text-right">{formatCount(student.mediumSolved)}</TableCell>
                       <TableCell className="text-right">{formatCount(student.hardSolved)}</TableCell>
-                      <TableCell className="whitespace-nowrap text-[#666666]">{formatSynced(student.lastSyncedAt)}</TableCell>
+                      <TableCell className="whitespace-nowrap text-muted">{formatSynced(student.lastSyncedAt)}</TableCell>
                       <TableCell><StatusBadge student={student} /></TableCell>
                     </TableRow>
                   ))}
@@ -364,9 +364,9 @@ function SectionStatsView() {
 
 function StatTile({ label, value }: { label: string; value: number | null }) {
   return (
-    <div className="rounded-[12px] border border-[#E8E8E8] p-4">
-      <p className="text-xs font-medium text-[#9A9A9A]">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-[#111111]">{formatCount(value)}</p>
+    <div className="rounded-[12px] border border-line p-4">
+      <p className="text-xs font-medium text-muted">{label}</p>
+      <p className="mt-1 text-2xl font-[650] text-fg">{formatCount(value)}</p>
     </div>
   );
 }
@@ -387,7 +387,7 @@ function MyStatsView() {
     return (
       <Card>
         <CardContent>
-          <p className="text-sm text-red-600">{getApiErrorMessage(error, 'Unable to load your LeetCode profile.')}</p>
+          <p className="text-sm text-danger">{getApiErrorMessage(error, 'Unable to load your LeetCode profile.')}</p>
         </CardContent>
       </Card>
     );
@@ -410,7 +410,7 @@ function MyStatsView() {
             <StatusBadge student={shown} />
             {hasProfile && (
               <Button onClick={() => fetchMine.mutate()} isLoading={fetchMine.isPending}>
-                {!fetchMine.isPending && <RefreshCw className="w-4 h-4 mr-2" />}
+                {!fetchMine.isPending && <RefreshCw className="w-4 h-4" />}
                 {fetchMine.isPending ? 'Fetching...' : 'Fetch Data'}
               </Button>
             )}
@@ -424,15 +424,15 @@ function MyStatsView() {
           <StatTile label="Medium Solved" value={shown.mediumSolved} />
           <StatTile label="Hard Solved" value={shown.hardSolved} />
         </div>
-        <p className="text-sm text-[#666666]">Last synced: {formatSynced(shown.lastSyncedAt)}</p>
+        <p className="text-sm text-muted">Last synced: {formatSynced(shown.lastSyncedAt)}</p>
         {shown.status === 'FAILED' && (
-          <p className="text-sm text-[#D97706]">
+          <p className="text-sm text-warn">
             {shown.message ?? 'LeetCode statistics are unavailable right now.'}
             {shown.lastSyncedAt ? ' Showing the last saved values.' : ''}
           </p>
         )}
         {fetchMine.isError && (
-          <p className="text-sm text-red-600">{getApiErrorMessage(fetchMine.error, 'Unable to fetch LeetCode statistics.')}</p>
+          <p className="text-sm text-danger">{getApiErrorMessage(fetchMine.error, 'Unable to fetch LeetCode statistics.')}</p>
         )}
       </CardContent>
     </Card>

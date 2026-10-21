@@ -31,7 +31,7 @@ function PollResponseOptions({ item }: { item: StudentSchedule }) {
         {item.options.map((option, index) => (
           <label
             key={index}
-            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${selected === index ? "border-[#111111]" : "border-[#E8E8E8]"} ${canRespond ? "cursor-pointer" : ""}`}
+            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${selected === index ? "border-fg" : "border-line"} ${canRespond ? "cursor-pointer" : ""}`}
           >
             {hasRole("ROLE_STUDENT") && (
               <input
@@ -47,7 +47,7 @@ function PollResponseOptions({ item }: { item: StudentSchedule }) {
         ))}
       </div>
       {item.responded && hasRole("ROLE_STUDENT") && (
-        <p className="text-sm text-green-700">
+        <p className="text-sm text-ok">
           Response submitted. Reminders have stopped.
         </p>
       )}
@@ -64,7 +64,7 @@ function PollResponseOptions({ item }: { item: StudentSchedule }) {
         </Button>
       )}
       {submitResponse.isError && (
-        <p className="text-sm text-red-600">
+        <p className="text-sm text-danger">
           {getApiErrorMessage(submitResponse.error, "Unable to submit response.")}
         </p>
       )}
@@ -178,7 +178,7 @@ export function StudentSchedulePage({ type }: { type: StudentScheduleType }) {
                   <textarea
                     value={details}
                     onChange={(e) => setDetails(e.target.value)}
-                    className="mt-2 min-h-24 w-full rounded-lg border border-[#E8E8E8] p-3 text-sm"
+                    className="f-control mt-2 min-h-24"
                   />
                 </div>
                 {type === "DEADLINE" && (
@@ -255,7 +255,7 @@ export function StudentSchedulePage({ type }: { type: StudentScheduleType }) {
                     {audience?.classes.map((item) => (
                       <label
                         key={item.id}
-                        className="flex gap-2 rounded-lg border border-[#E8E8E8] p-3 text-sm"
+                        className="flex gap-2 rounded-lg border border-line p-3 text-sm"
                       >
                         <input
                           type="checkbox"
@@ -273,7 +273,7 @@ export function StudentSchedulePage({ type }: { type: StudentScheduleType }) {
                   <p className="mb-2 text-sm font-medium">
                     Specific students (optional)
                   </p>
-                  <div className="max-h-52 overflow-y-auto rounded-lg border border-[#E8E8E8] p-2">
+                  <div className="max-h-52 overflow-y-auto rounded-lg border border-line p-2">
                     {audience?.students.map((item) => (
                       <label key={item.id} className="flex gap-2 p-2 text-sm">
                         <input
@@ -285,7 +285,7 @@ export function StudentSchedulePage({ type }: { type: StudentScheduleType }) {
                         />
                         <span>
                           {item.name}{" "}
-                          <span className="text-[#9A9A9A]">
+                          <span className="text-muted">
                             ({item.registerNumber})
                           </span>
                         </span>
@@ -295,7 +295,7 @@ export function StudentSchedulePage({ type }: { type: StudentScheduleType }) {
                 </div>
                 {message && (
                   <p
-                    className={`text-sm ${create.isError ? "text-red-600" : "text-green-700"}`}
+                    className={`text-sm ${create.isError ? "text-danger" : "text-ok"}`}
                   >
                     {message}
                   </p>
@@ -326,21 +326,21 @@ export function StudentSchedulePage({ type }: { type: StudentScheduleType }) {
                 <Spinner size="lg" />
               </div>
             ) : items.length === 0 ? (
-              <p className="p-8 text-center text-sm text-[#666666]">
+              <p className="p-8 text-center text-sm text-muted">
                 No {type.toLowerCase()}s found.
               </p>
             ) : (
-              <div className="divide-y divide-[#F0F0F0]">
+              <div className="divide-y divide-line">
                 {items.map((item) => (
                   <article id={`poll-${item.id}`} key={item.id} className="space-y-2 p-5 scroll-mt-24">
                     <div className="flex justify-between gap-4">
-                      <h3 className="font-semibold">{item.title}</h3>
-                      <span className="text-xs text-[#9A9A9A]">
+                      <h3 className="font-[550]">{item.title}</h3>
+                      <span className="text-xs text-muted">
                         By {item.created_by_name}
                       </span>
                     </div>
                     {item.details && (
-                      <p className="text-sm text-[#666666]">{item.details}</p>
+                      <p className="text-sm text-muted">{item.details}</p>
                     )}
                     {item.due_date && (
                       <p className="text-sm">
@@ -351,7 +351,7 @@ export function StudentSchedulePage({ type }: { type: StudentScheduleType }) {
                     {item.options?.length > 0 && (
                       <PollResponseOptions item={item} />
                     )}
-                    <p className="text-xs text-[#9A9A9A]">
+                    <p className="text-xs text-muted">
                       {[...item.classes, ...item.students].join(", ")}
                     </p>
                   </article>

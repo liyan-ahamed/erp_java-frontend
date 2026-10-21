@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/query-keys';
 import { timetableService } from '@/services/api/timetable.service';
+import { scheduleFromPeriods } from '@/lib/academic-periods';
 import { TimetableListQuery, TimetableSlotRequest } from '@/types/timetable';
 
 const NO_POLLING = { refetchInterval: false } as const;
@@ -11,6 +12,18 @@ export const useTimetableSlots = (query: TimetableListQuery, enabled = true) =>
     queryFn: () => timetableService.getSlots(query),
     placeholderData: keepPreviousData,
     enabled,
+    ...NO_POLLING,
+  });
+
+/**
+ * The institution's daily period schedule from the backend. It never changes during a session, so it is
+ * fetched once and kept. `data` is already converted to schedule rows (see lib/academic-periods).
+ */
+export const usePeriodSchedule = () =>
+  useQuery({
+    queryKey: [QUERY_KEYS.PERIOD_SCHEDULE],
+    queryFn: async () => scheduleFromPeriods(await timetableService.getPeriods()),
+    staleTime: Infinity,
     ...NO_POLLING,
   });
 

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Award, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Award, ShieldAlert } from '@/components/ui/icons';
 import { PageContainer } from '@/components/common/PageContainer';
 import { RequireRole } from '@/components/common/RequireRole';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -20,11 +20,11 @@ type Grouping = 'type' | 'year';
 
 function VerifiedEntryCard({ entry }: { entry: PortfolioEntry }) {
   return (
-    <div className="border border-[#F0F0F0] rounded-[12px] p-4 space-y-3">
+    <div className="border border-line rounded-[12px] p-4 space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="font-semibold text-sm text-[#111111] break-words">{entry.title}</p>
-          <p className="text-xs text-[#666666]">
+          <p className="font-[550] text-sm text-fg break-words">{entry.title}</p>
+          <p className="text-xs text-muted">
             {entry.organization || '—'} · {dateRange(entry)}
           </p>
         </div>
@@ -35,7 +35,7 @@ function VerifiedEntryCard({ entry }: { entry: PortfolioEntry }) {
         {entry.level && <Badge variant="outline">{LEVEL_LABELS[entry.level]}</Badge>}
         {entry.achievementResult && <Badge variant="info">{entry.achievementResult}</Badge>}
       </div>
-      {entry.description && <p className="text-sm text-[#444444] whitespace-pre-wrap">{entry.description}</p>}
+      {entry.description && <p className="text-sm text-fg whitespace-pre-wrap">{entry.description}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <DetailField label="Role / Position" value={entry.roleOrPosition || '—'} />
         <DetailField label="Verified" value={`${formatDateTime(entry.reviewedAt)}${entry.reviewedByName ? ` · ${entry.reviewedByName}` : ''}`} />
@@ -73,8 +73,8 @@ function StudentPortfolioView() {
   }, [data, grouping]);
 
   const back = (
-    <Link href={ROUTES.PORTFOLIO_REVIEW} className="inline-flex items-center text-sm text-[#666666] hover:text-[#111111]">
-      <ArrowLeft className="w-4 h-4 mr-1" /> Back to Review Queue
+    <Link href={ROUTES.PORTFOLIO_REVIEW} className="inline-flex items-center gap-2 text-[12px] text-muted hover:text-fg">
+      <ArrowLeft className="w-[13px] h-[13px]" /> Back to Review Queue
     </Link>
   );
 
@@ -89,7 +89,7 @@ function StudentPortfolioView() {
       ) : isError ? (
         <div className="space-y-3">
           {httpStatus(error) === 403 && (
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#111111]">
+            <div className="flex items-center gap-2 text-sm font-[550] text-fg">
               <ShieldAlert className="w-4 h-4" aria-hidden /> Access denied
             </div>
           )}
@@ -100,14 +100,14 @@ function StudentPortfolioView() {
           <Card>
             <CardContent className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-[#111111]">{data.studentName}</h2>
-                <p className="text-sm text-[#666666]">
+                <h2 className="text-lg font-[650] text-fg">{data.studentName}</h2>
+                <p className="text-sm text-muted">
                   <span className="font-mono">{data.registerNumber || '—'}</span> · {data.batchName} · Section {data.sectionName}
                 </p>
               </div>
               <div className="text-left md:text-right">
-                <p className="text-2xl font-bold text-[#111111]">{data.verifiedCount}</p>
-                <p className="text-xs text-[#9A9A9A] uppercase tracking-wider font-semibold">Verified achievements</p>
+                <p className="text-2xl font-[650] text-fg">{data.verifiedCount}</p>
+                <p className="text-xs text-muted uppercase tracking-wider font-[550]">Verified achievements</p>
               </div>
             </CardContent>
           </Card>
@@ -117,17 +117,17 @@ function StudentPortfolioView() {
           ) : (
             <>
               <div className="flex items-center gap-3">
-                <label htmlFor="grouping" className="text-sm text-[#666666]">Group by</label>
+                <label htmlFor="grouping" className="text-sm text-muted">Group by</label>
                 <select id="grouping" value={grouping} onChange={(e) => setGrouping(e.target.value as Grouping)} className={SELECT_CLASS}>
                   <option value="type">Activity type</option>
                   <option value="year">Year</option>
                 </select>
-                <span className="text-xs text-[#9A9A9A]">Only verified entries are shown.</span>
+                <span className="text-xs text-muted">Only verified entries are shown.</span>
               </div>
               {groups.map((group) => (
                 <Card key={group.key}>
-                  <div className="px-6 py-4 border-b border-[#F5F5F5] flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-[#111111]">{group.label}</h3>
+                  <div className="px-6 py-4 border-b border-line flex items-center justify-between">
+                    <h3 className="text-sm font-[550] text-fg">{group.label}</h3>
                     <Badge>{group.entries.length}</Badge>
                   </div>
                   <CardContent className="p-4 sm:p-6 space-y-3">

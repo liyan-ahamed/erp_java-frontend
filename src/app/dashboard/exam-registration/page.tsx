@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
-import { CalendarCheck, FileCheck2, Plus } from 'lucide-react';
+import { CalendarCheck, FileCheck2, Plus } from '@/components/ui/icons';
 import { PageContainer } from '@/components/common/PageContainer';
 import { RequireRole } from '@/components/common/RequireRole';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -27,7 +27,7 @@ import {
   useMyRegistrationAction,
   useReviewRegistration,
 } from '@/hooks/useExams';
-import { SUBJECT_TYPE_LABELS, SELECT_CLASS, formatDate, formatDateTime } from '@/lib/gradebook-labels';
+import { SELECT_CLASS, formatDate, formatDateTime, subjectTypeLabel } from '@/lib/gradebook-labels';
 import {
   ACADEMIC_YEAR_PATTERN,
   EXAM_PERIOD_STATUS_BADGE,
@@ -38,6 +38,7 @@ import {
   MIN_REJECTION_NOTE,
 } from '@/lib/erp-labels';
 import { ExamPeriod, ExamRegistration, ExamRegistrationStatus, ExamType, StudentExamPeriod } from '@/types/exam';
+import { Tabs } from '@/components/ui/Tabs';
 
 const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -45,11 +46,11 @@ function PeriodHeading({ period }: { period: ExamPeriod }) {
   return (
     <div>
       <div className="flex items-center gap-2 flex-wrap">
-        <h3 className="text-base font-semibold text-[#111111]">{period.name}</h3>
+        <h3 className="text-base font-[550] text-fg">{period.name}</h3>
         <Badge variant="outline">{EXAM_TYPE_LABELS[period.examType]}</Badge>
         <StatusBadge info={EXAM_PERIOD_STATUS_BADGE[period.status]} />
       </div>
-      <p className="text-xs text-[#9A9A9A] mt-0.5">
+      <p className="text-xs text-muted mt-0.5">
         {period.academicYear} · Semester {period.semester} · Registration {formatDate(period.registrationStart)} – {formatDate(period.registrationEnd)}
         {period.status === 'OPEN' && !period.registrationWindowOpen && ' · outside the registration window'}
       </p>
@@ -61,19 +62,19 @@ function RegistrationSummary({ registration }: { registration: ExamRegistration 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 flex-wrap text-sm">
-        <span className="text-[#666666]">Status:</span> <StatusBadge info={EXAM_REGISTRATION_STATUS_BADGE[registration.status]} />
-        {registration.submittedAt && <span className="text-xs text-[#9A9A9A]">Submitted {formatDateTime(registration.submittedAt)}</span>}
+        <span className="text-muted">Status:</span> <StatusBadge info={EXAM_REGISTRATION_STATUS_BADGE[registration.status]} />
+        {registration.submittedAt && <span className="text-xs text-muted">Submitted {formatDateTime(registration.submittedAt)}</span>}
       </div>
       {registration.reviewedAt && (
-        <p className="text-xs text-[#666666]">Reviewed {formatDateTime(registration.reviewedAt)}{registration.reviewedByName ? ` by ${registration.reviewedByName}` : ''}</p>
+        <p className="text-xs text-muted">Reviewed {formatDateTime(registration.reviewedAt)}{registration.reviewedByName ? ` by ${registration.reviewedByName}` : ''}</p>
       )}
       {registration.reviewNote && (
-        <div className={`rounded-[10px] p-3 text-sm border ${registration.status === 'REJECTED' ? 'bg-red-50 border-red-100 text-red-700' : 'bg-[#FAFAFA] border-[#E8E8E8] text-[#111111]'}`}>
+        <div className={`rounded-[10px] p-3 text-sm border ${registration.status === 'REJECTED' ? 'bg-danger-soft border-danger/20 text-danger' : 'bg-soft border-line text-fg'}`}>
           <span className="font-medium">{registration.status === 'REJECTED' ? 'Rejection reason: ' : 'Review note: '}</span>{registration.reviewNote}
         </div>
       )}
-      <ul className="text-sm text-[#111111] list-disc pl-5">
-        {registration.subjects.map((s) => <li key={s.subjectOfferingId}><span className="font-mono text-xs text-[#9A9A9A] mr-1">{s.subjectCode}</span>{s.subjectName}</li>)}
+      <ul className="text-sm text-fg list-disc pl-5">
+        {registration.subjects.map((s) => <li key={s.subjectOfferingId}><span className="font-mono text-xs text-muted mr-1">{s.subjectCode}</span>{s.subjectName}</li>)}
       </ul>
     </div>
   );
@@ -118,7 +119,7 @@ function StudentPeriod({ item, registration }: { item: StudentExamPeriod; regist
         {!period.registrationWindowOpen && <ReadOnlyNote>The registration window is not open today, so this registration cannot be changed.</ReadOnlyNote>}
         {status === 'SUBMITTED' && <ReadOnlyNote>Submitted — waiting for HOD review. It can no longer be changed.</ReadOnlyNote>}
         {status === 'APPROVED' && <ReadOnlyNote>Approved. This registration is final.</ReadOnlyNote>}
-        {status === 'REJECTED' && editable && <p className="text-sm text-[#92400E]">Update your subjects, save, and submit again.</p>}
+        {status === 'REJECTED' && editable && <p className="text-sm text-warn">Update your subjects, save, and submit again.</p>}
 
         {editable && (
           <div className="space-y-3">
@@ -126,17 +127,17 @@ function StudentPeriod({ item, registration }: { item: StudentExamPeriod; regist
             {eligible.isLoading ? <Spinner size="sm" /> : eligible.isError ? (
               <FormError error={eligible.error} fallback="Unable to load your eligible subjects." />
             ) : (eligible.data ?? []).length === 0 ? (
-              <p className="text-sm text-[#9A9A9A]">No eligible subjects for this exam period.</p>
+              <p className="text-sm text-muted">No eligible subjects for this exam period.</p>
             ) : (
               <ul className="space-y-2">
                 {(eligible.data ?? []).map((s) => (
                   <li key={s.subjectOfferingId}>
-                    <label className="flex items-start gap-3 rounded-[10px] border border-[#E8E8E8] p-3 cursor-pointer hover:bg-[#FAFAFA]">
+                    <label className="flex items-start gap-3 rounded-[10px] border border-line p-3 cursor-pointer hover:bg-soft">
                       <input type="checkbox" className="mt-1" checked={current.has(s.subjectOfferingId)} onChange={() => toggle(s.subjectOfferingId)} />
                       <span>
-                        <span className="text-sm font-medium text-[#111111]">{s.subjectName}</span>{' '}
-                        <span className="font-mono text-xs text-[#9A9A9A]">{s.subjectCode}</span>
-                        <span className="block text-xs text-[#666666]">{SUBJECT_TYPE_LABELS[s.subjectType]} · {s.staffName}</span>
+                        <span className="text-sm font-medium text-fg">{s.subjectName}</span>{' '}
+                        <span className="font-mono text-xs text-muted">{s.subjectCode}</span>
+                        <span className="block text-xs text-muted">{subjectTypeLabel(s.subjectType)} · {s.staffName}</span>
                       </span>
                     </label>
                   </li>
@@ -159,7 +160,7 @@ function StudentPeriod({ item, registration }: { item: StudentExamPeriod; regist
                   title={dirty ? 'Save your selection first' : status !== 'DRAFT' ? 'Save a draft first' : undefined}>
                   Submit
                 </Button>
-                {current.size === 0 && <span className="text-xs text-[#9A9A9A]">Select at least one subject.</span>}
+                {current.size === 0 && <span className="text-xs text-muted">Select at least one subject.</span>}
               </div>
             )}
           </div>
@@ -190,11 +191,11 @@ function StudentExamRegistration() {
       {mine.isError && <ErrorBanner error={mine.error} fallback="Unable to load your past registrations." />}
       {history.length > 0 && (
         <section className="space-y-3">
-          <h3 className="text-sm font-semibold text-[#111111]">Earlier registrations</h3>
+          <h3 className="text-sm font-[550] text-fg">Earlier registrations</h3>
           {history.map((r) => (
             <Card key={r.id}>
               <CardContent className="p-5 space-y-2">
-                <p className="text-sm font-semibold text-[#111111]">{r.examPeriodName} <Badge variant="outline">{EXAM_TYPE_LABELS[r.examType]}</Badge></p>
+                <p className="text-sm font-[550] text-fg">{r.examPeriodName} <Badge variant="outline">{EXAM_TYPE_LABELS[r.examType]}</Badge></p>
                 <RegistrationSummary registration={r} />
               </CardContent>
             </Card>
@@ -238,7 +239,7 @@ function PeriodForm({ period, onSaved }: { period?: ExamPeriod; onSaved: () => v
 
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
-      {termLocked && <p className="text-xs text-[#92400E]">This period is open: only the name and registration dates can change.</p>}
+      {termLocked && <p className="text-xs text-warn">This period is open: only the name and registration dates can change.</p>}
       <div className="space-y-1.5">
         <FieldLabel htmlFor="ep-name">Name</FieldLabel>
         <Input id="ep-name" maxLength={150} value={form.name} onChange={(e) => set({ name: e.target.value })} />
@@ -270,7 +271,7 @@ function PeriodForm({ period, onSaved }: { period?: ExamPeriod; onSaved: () => v
           <Input id="ep-end" type="date" value={form.registrationEnd} onChange={(e) => set({ registrationEnd: e.target.value })} />
         </div>
       </div>
-      {problem && <p className="text-sm text-red-600" role="alert">{problem}</p>}
+      {problem && <p className="text-sm text-danger" role="alert">{problem}</p>}
       {action.isError && <FormError error={action.error} fallback="Unable to save the exam period." />}
       <Button type="submit" isLoading={action.isPending}>{period ? 'Save Changes' : 'Create Exam Period'}</Button>
     </form>
@@ -286,7 +287,7 @@ function PeriodsTab() {
 
   return (
     <div className="space-y-4">
-      <Button size="sm" onClick={() => setPanel({ mode: 'create' })}><Plus className="w-4 h-4 mr-1.5" /> New Exam Period</Button>
+      <Button size="sm" onClick={() => setPanel({ mode: 'create' })}><Plus className="w-4 h-4" /> New Exam Period</Button>
       {action.isError && <FormError error={action.error} fallback="Unable to change the exam period." />}
       {confirm && (
         <ConfirmBox
@@ -322,18 +323,18 @@ function PeriodsTab() {
                     {data.content.map((p) => (
                       <TableRow key={p.id}>
                         <TableCell className="font-medium">{p.name}</TableCell>
-                        <TableCell className="text-[#666666]">{EXAM_TYPE_LABELS[p.examType]}</TableCell>
-                        <TableCell className="whitespace-nowrap text-[#666666]">{p.academicYear} · S{p.semester}</TableCell>
+                        <TableCell className="text-muted">{EXAM_TYPE_LABELS[p.examType]}</TableCell>
+                        <TableCell className="whitespace-nowrap text-muted">{p.academicYear} · S{p.semester}</TableCell>
                         <TableCell className="whitespace-nowrap">
                           {formatDate(p.registrationStart)} – {formatDate(p.registrationEnd)}
-                          {p.registrationWindowOpen && <span className="block text-[11px] text-green-700">Open now</span>}
+                          {p.registrationWindowOpen && <span className="block text-[11px] text-ok">Open now</span>}
                         </TableCell>
                         <TableCell><StatusBadge info={EXAM_PERIOD_STATUS_BADGE[p.status]} /></TableCell>
                         <TableCell className="text-right whitespace-nowrap">
                           {p.status !== 'CLOSED' && <Button size="sm" variant="ghost" onClick={() => setPanel({ mode: 'edit', period: p })}>Edit</Button>}
                           {p.status === 'DRAFT' && <Button size="sm" variant="ghost" onClick={() => { action.reset(); setConfirm({ period: p, action: 'open' }); }}>Open</Button>}
                           {p.status === 'OPEN' && <Button size="sm" variant="ghost" onClick={() => { action.reset(); setConfirm({ period: p, action: 'close' }); }}>Close</Button>}
-                          {p.status === 'CLOSED' && <span className="text-xs text-[#9A9A9A]">Final</span>}
+                          {p.status === 'CLOSED' && <span className="text-xs text-muted">Final</span>}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -455,14 +456,14 @@ function RegistrationsTab() {
                   </TableHeader>
                   <TableBody>
                     {data.content.map((r) => (
-                      <TableRow key={r.id} onClick={() => setSelected(r)} className={`cursor-pointer ${selected?.id === r.id ? 'bg-[#F5F5F5]' : ''}`}>
+                      <TableRow key={r.id} onClick={() => setSelected(r)} className={`cursor-pointer ${selected?.id === r.id ? 'bg-soft' : ''}`}>
                         <TableCell className="whitespace-nowrap">
                           <button className="font-medium hover:underline underline-offset-2 text-left" onClick={(e) => { e.stopPropagation(); setSelected(r); }}>{r.studentName}</button>
-                          <div className="font-mono text-[11px] text-[#9A9A9A]">{r.registerNumber} · Sec {r.sectionName}</div>
+                          <div className="font-mono text-[11px] text-muted">{r.registerNumber} · Sec {r.sectionName}</div>
                         </TableCell>
                         <TableCell>{r.examPeriodName}</TableCell>
-                        <TableCell className="text-[#666666]">{r.subjects.map((s) => s.subjectCode).join(', ')}</TableCell>
-                        <TableCell className="whitespace-nowrap text-[#666666]">{formatDateTime(r.submittedAt)}</TableCell>
+                        <TableCell className="text-muted">{r.subjects.map((s) => s.subjectCode).join(', ')}</TableCell>
+                        <TableCell className="whitespace-nowrap text-muted">{formatDateTime(r.submittedAt)}</TableCell>
                         <TableCell><StatusBadge info={EXAM_REGISTRATION_STATUS_BADGE[r.status]} /></TableCell>
                       </TableRow>
                     ))}
@@ -486,14 +487,8 @@ function HodExamRegistration() {
   const [tab, setTab] = useState<'registrations' | 'periods'>('registrations');
   return (
     <div className="space-y-4">
-      <div className="inline-flex rounded-[10px] border border-[#E8E8E8] overflow-hidden" role="tablist" aria-label="Exam registration views">
-        {(['registrations', 'periods'] as const).map((t) => (
-          <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
-            className={`px-4 h-9 text-sm font-medium ${tab === t ? 'bg-[#111111] text-white' : 'bg-white text-[#666666] hover:bg-[#F5F5F5]'}`}>
-            {t === 'registrations' ? 'Registrations' : 'Exam Periods'}
-          </button>
-        ))}
-      </div>
+      <Tabs label="Exam registration views" value={tab} onChange={setTab}
+        items={[{ value: 'registrations', label: 'Registrations' }, { value: 'periods', label: 'Exam Periods' }] as const} />
       {tab === 'registrations' ? <RegistrationsTab /> : <PeriodsTab />}
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ReceiptText, Search } from 'lucide-react';
+import { ReceiptText, Search } from '@/components/ui/icons';
 import { PageContainer } from '@/components/common/PageContainer';
 import { RequireRole } from '@/components/common/RequireRole';
 import { Card } from '@/components/ui/Card';
@@ -36,7 +36,7 @@ function ReceiptTable({ receipts, showStudent, selectedId, onSelect }: {
       </TableHeader>
       <TableBody>
         {receipts.map((r) => (
-          <TableRow key={r.id} onClick={() => onSelect(r)} className={`cursor-pointer ${selectedId === r.id ? 'bg-[#F5F5F5]' : ''}`}>
+          <TableRow key={r.id} onClick={() => onSelect(r)} className={`cursor-pointer ${selectedId === r.id ? 'bg-soft' : ''}`}>
             <TableCell className="font-mono text-xs whitespace-nowrap">
               <button className="hover:underline underline-offset-2" onClick={(e) => { e.stopPropagation(); onSelect(r); }}>{r.receiptNumber}</button>
             </TableCell>
@@ -44,12 +44,12 @@ function ReceiptTable({ receipts, showStudent, selectedId, onSelect }: {
             {showStudent && (
               <TableCell className="whitespace-nowrap">
                 <div className="font-medium">{r.studentName}</div>
-                <div className="font-mono text-[11px] text-[#9A9A9A]">{r.registerNumber} · Sec {r.sectionName}</div>
+                <div className="font-mono text-[11px] text-muted">{r.registerNumber} · Sec {r.sectionName}</div>
               </TableCell>
             )}
             <TableCell>{r.feeName}</TableCell>
             <TableCell className="text-right whitespace-nowrap font-medium">{formatMoney(r.amount)}</TableCell>
-            <TableCell className="text-[#666666] whitespace-nowrap">{PAYMENT_METHOD_LABELS[r.paymentMethod]}</TableCell>
+            <TableCell className="text-muted whitespace-nowrap">{PAYMENT_METHOD_LABELS[r.paymentMethod]}</TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -117,10 +117,10 @@ function HodReceipts() {
           <option value="">All Methods</option>
           {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{PAYMENT_METHOD_LABELS[m]}</option>)}
         </select>
-        <label className="flex items-center gap-2 text-xs text-[#666666]">From
+        <label className="flex items-center gap-2 text-xs text-muted">From
           <input type="date" aria-label="From date" className={SELECT_CLASS} value={filters.from} onChange={(e) => set({ from: e.target.value })} />
         </label>
-        <label className="flex items-center gap-2 text-xs text-[#666666]">To
+        <label className="flex items-center gap-2 text-xs text-muted">To
           <input type="date" aria-label="To date" className={SELECT_CLASS} value={filters.to} onChange={(e) => set({ to: e.target.value })} />
         </label>
         {isFetching && !isLoading && <Spinner size="sm" />}

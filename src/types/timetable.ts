@@ -29,10 +29,24 @@ export interface TimetableSlot {
   active: boolean;
   createdAt: string | null;
   updatedAt: string | null;
+  /** Only when the list was requested with weekOf: this slot's date in that week. */
+  date?: string | null;
+}
+
+/** GET /timetable/periods — one row of the institution's daily schedule. periodNumber is null for BREAK / LUNCH. */
+export interface PeriodResponse {
+  periodNumber: number | null;
+  label: string;
+  /** "HH:mm:ss" or "HH:mm". */
+  startTime: string;
+  endTime: string;
+  type: 'TEACHING' | 'BREAK' | 'LUNCH';
+  teaching: boolean;
 }
 
 export interface TimetableListQuery {
   batchId?: number;
+  semester?: number;
   sectionId?: number;
   staffId?: number;
   subjectOfferingId?: number;

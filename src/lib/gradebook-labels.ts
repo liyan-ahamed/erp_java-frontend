@@ -9,12 +9,23 @@ import {
 
 // Display-only labels for backend enum values. API calls always use the raw values.
 
-export const SUBJECT_TYPES: SubjectType[] = ['THEORY', 'THEORY_CUM_PRACTICAL'];
+export const SUBJECT_TYPES: SubjectType[] = ['THEORY', 'THEORY_CUM_PRACTICAL', 'PROJECT_BASED'];
 
 export const SUBJECT_TYPE_LABELS: Record<SubjectType, string> = {
   THEORY: 'Theory',
   THEORY_CUM_PRACTICAL: 'Theory + Practical',
+  PROJECT_BASED: 'Project based',
 };
+
+/** Display label; a subject with no type yet shows "Not classified" (an unknown value shows as sent). */
+export const subjectTypeLabel = (type: SubjectType | null | undefined) =>
+  type ? SUBJECT_TYPE_LABELS[type] ?? type : 'Not classified';
+
+/** Credits column/field only appears when the backend sends credits at all. */
+export const hasCredits = (rows: { credits?: number | null }[]) => rows.some((r) => r.credits !== undefined);
+
+/** Credits as sent; null = not recorded. */
+export const formatCredits = (value: number | null | undefined) => (value === null || value === undefined ? '—' : String(value));
 
 export const ASSESSMENT_TYPES: AssessmentType[] = [
   'CAT_1', 'CAT_2', 'ASSIGNMENT', 'QUIZ', 'LAB', 'PRACTICAL', 'RECORD',
@@ -73,4 +84,4 @@ export const formatDateTime = (value: string | null | undefined) =>
     : '—';
 
 export const SELECT_CLASS =
-  'h-10 px-3 text-sm border border-[#E8E8E8] rounded-[10px] bg-white text-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] disabled:opacity-50 disabled:cursor-not-allowed';
+  'f-select';

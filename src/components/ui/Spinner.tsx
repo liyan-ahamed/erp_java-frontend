@@ -2,15 +2,17 @@ import React from 'react';
 
 export const Spinner = ({ className = '', size = 'md' }: { className?: string; size?: 'sm' | 'md' | 'lg' | 'xl' }) => {
   const sizes = {
-    sm: 'w-4 h-4 border-2',
-    md: 'w-6 h-6 border-2',
-    lg: 'w-8 h-8 border-[3px]',
-    xl: 'w-12 h-12 border-4',
+    sm: 'w-3.5 h-3.5 border-[1.5px]',
+    md: 'w-5 h-5 border-2',
+    lg: 'w-7 h-7 border-2',
+    xl: 'w-10 h-10 border-[3px]',
   };
 
   return (
-    <div
-      className={`animate-spin rounded-full border-[#E8E8E8] border-t-[#111111] ${sizes[size]} ${className}`}
+    <span
+      role="status"
+      aria-label="Loading"
+      className={`inline-block flex-shrink-0 animate-spin rounded-full border-line border-t-fg ${sizes[size]} ${className}`}
     />
   );
 };

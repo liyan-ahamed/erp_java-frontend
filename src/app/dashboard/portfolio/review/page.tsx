@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ClipboardCheck, Search, ShieldAlert, UserRound } from 'lucide-react';
+import { ClipboardCheck, Search, ShieldAlert, UserRound } from '@/components/ui/icons';
 import { PageContainer } from '@/components/common/PageContainer';
 import { RequireRole } from '@/components/common/RequireRole';
 import { Card } from '@/components/ui/Card';
@@ -31,10 +31,12 @@ import {
   useVerifyPortfolioEntry,
 } from '@/hooks/usePortfolio';
 import { ROUTES } from '@/constants/routes';
+import { useAuth } from '@/contexts/auth-context';
 import { SELECT_CLASS, formatDateTime } from '@/lib/gradebook-labels';
 import {
   ACTIVITY_TYPES,
   ACTIVITY_TYPE_LABELS,
+  STAFF_REVIEW_FILTER_TYPES,
   LEVELS,
   LEVEL_LABELS,
   MIN_REJECTION_NOTE_LENGTH,
@@ -65,7 +67,7 @@ function ReviewDetail({ id, initial }: { id: number; initial?: PortfolioEntry })
     return (
       <div className="space-y-3">
         {status === 403 && (
-          <div className="flex items-center gap-2 text-sm font-semibold text-[#111111]">
+          <div className="flex items-center gap-2 text-sm font-[550] text-fg">
             <ShieldAlert className="w-4 h-4" aria-hidden /> Access denied
           </div>
         )}
@@ -106,18 +108,18 @@ function ReviewDetail({ id, initial }: { id: number; initial?: PortfolioEntry })
     <div className="space-y-6">
       <div className="space-y-2">
         <PortfolioStatusBadge status={entry.status} />
-        <h4 className="text-base font-semibold text-[#111111] break-words">{entry.title}</h4>
+        <h4 className="text-base font-[550] text-fg break-words">{entry.title}</h4>
       </div>
 
       {done && (
-        <p className="text-sm rounded-[10px] bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] p-3" role="status">{done}</p>
+        <p className="text-sm rounded-[10px] bg-ok-soft border border-ok/25 text-ok p-3" role="status">{done}</p>
       )}
 
       <div className="space-y-3">
         <StudentIdentity entry={entry} />
         <Link
           href={ROUTES.PORTFOLIO_STUDENT(entry.studentId)}
-          className="inline-flex items-center gap-1 text-xs text-[#2563EB] hover:underline"
+          className="inline-flex items-center gap-1 text-xs text-accent hover:underline"
         >
           <UserRound className="w-3.5 h-3.5" aria-hidden /> View verified portfolio
         </Link>
@@ -127,7 +129,7 @@ function ReviewDetail({ id, initial }: { id: number; initial?: PortfolioEntry })
       <EntryContent entry={entry} />
 
       {entry.status === 'SUBMITTED' && (
-        <div className="space-y-3 pt-2 border-t border-[#F5F5F5]">
+        <div className="space-y-3 pt-2 border-t border-line">
           {deciding === 'verify' ? (
             <ConfirmBox
               confirmLabel="Verify Entry"
@@ -169,8 +171,8 @@ function ReviewDetail({ id, initial }: { id: number; initial?: PortfolioEntry })
                   aria-invalid={!!noteError}
                   className={TEXTAREA_CLASS}
                 />
-                <p className="text-xs text-[#9A9A9A]">{note.trim().length}/1000 · at least {MIN_REJECTION_NOTE_LENGTH} characters</p>
-                {noteError && <p className="text-xs text-red-600" role="alert">{noteError}</p>}
+                <p className="text-xs text-muted">{note.trim().length}/1000 · at least {MIN_REJECTION_NOTE_LENGTH} characters</p>
+                {noteError && <p className="text-xs text-danger" role="alert">{noteError}</p>}
               </div>
             </ConfirmBox>
           ) : (
@@ -194,6 +196,9 @@ function ReviewQueueView() {
   const entryParam = Number(searchParams.get('entry'));
   const selectedId = Number.isInteger(entryParam) && entryParam > 0 ? entryParam : null;
 
+  const { hasRole } = useAuth();
+  // HOD keeps every type; STAFF get the shorter list (see STAFF_REVIEW_FILTER_TYPES).
+  const filterTypes = hasRole('ROLE_HOD') ? ACTIVITY_TYPES : STAFF_REVIEW_FILTER_TYPES;
   const [status, setStatus] = useState<ReviewStatus>('SUBMITTED');
   const [activityType, setActivityType] = useState<PortfolioActivityType | ''>('');
   const [level, setLevel] = useState<PortfolioLevel | ''>('');
@@ -256,7 +261,7 @@ function ReviewQueueView() {
         className={SELECT_CLASS}
       >
         <option value="">All Activity Types</option>
-        {ACTIVITY_TYPES.map((t) => <option key={t} value={t}>{ACTIVITY_TYPE_LABELS[t]}</option>)}
+        {filterTypes.map((t) => <option key={t} value={t}>{ACTIVITY_TYPE_LABELS[t]}</option>)}
       </select>
       <select
         aria-label="Filter by level"
@@ -324,14 +329,14 @@ function ReviewQueueView() {
                       {data?.content.map((entry) => (
                         <TableRow
                           key={entry.id}
-                          className={`cursor-pointer ${selectedId === entry.id ? 'bg-[#F5F5F5]' : ''}`}
+                          className={`cursor-pointer ${selectedId === entry.id ? 'bg-soft' : ''}`}
                           onClick={() => select(entry.id)}
                         >
                           <TableCell>
                             <div className="font-medium">{entry.studentName}</div>
-                            <div className="text-xs text-[#9A9A9A] font-mono">{entry.registerNumber || '—'}</div>
+                            <div className="text-xs text-muted font-mono">{entry.registerNumber || '—'}</div>
                           </TableCell>
-                          <TableCell className="text-[#666666] whitespace-nowrap">
+                          <TableCell className="text-muted whitespace-nowrap">
                             {entry.batchName} · {entry.sectionName}
                           </TableCell>
                           <TableCell className="max-w-[240px]">
@@ -342,11 +347,11 @@ function ReviewQueueView() {
                             >
                               {entry.title}
                             </button>
-                            {entry.organization && <div className="text-xs text-[#9A9A9A]">{entry.organization}</div>}
+                            {entry.organization && <div className="text-xs text-muted">{entry.organization}</div>}
                           </TableCell>
                           <TableCell><Badge variant="outline">{ACTIVITY_TYPE_LABELS[entry.activityType]}</Badge></TableCell>
-                          <TableCell className="text-[#666666]">{entry.level ? LEVEL_LABELS[entry.level] : '—'}</TableCell>
-                          <TableCell className="text-[#666666] whitespace-nowrap">
+                          <TableCell className="text-muted">{entry.level ? LEVEL_LABELS[entry.level] : '—'}</TableCell>
+                          <TableCell className="text-muted whitespace-nowrap">
                             {formatDateTime(status === 'SUBMITTED' ? entry.submittedAt : entry.reviewedAt)}
                           </TableCell>
                           <TableCell><PortfolioStatusBadge status={entry.status} /></TableCell>

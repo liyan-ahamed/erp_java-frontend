@@ -5,9 +5,9 @@ import { BackendPage, PaginatedResponse } from '@/types/api';
 import { CreateUserPayload, ManagedUser, UpdateUserPayload, UserListQuery } from '@/types/user-management';
 
 export const userService = {
-  getUsers: async ({ page, size, search, active }: UserListQuery): Promise<PaginatedResponse<ManagedUser>> => {
+  getUsers: async ({ page, size, search, active, role, batchId, sectionId }: UserListQuery): Promise<PaginatedResponse<ManagedUser>> => {
     const response = await apiClient.get(API_ENDPOINTS.USERS.BASE, {
-      params: { page, size, search: search || undefined, active },
+      params: { page, size, search: search || undefined, active, role, batchId, sectionId },
     });
     return mapPage(response.data.data as BackendPage<ManagedUser>);
   },

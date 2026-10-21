@@ -4,7 +4,8 @@
 // Decimal values (marks etc.) arrive as JSON numbers. Dates are "YYYY-MM-DD";
 // timestamps are server-local without an offset.
 
-export type SubjectType = 'THEORY' | 'THEORY_CUM_PRACTICAL';
+/** null on a subject = not classified yet (the HOD hasn't recorded a type). */
+export type SubjectType = 'THEORY' | 'THEORY_CUM_PRACTICAL' | 'PROJECT_BASED';
 
 export type AssessmentType =
   | 'CAT_1'
@@ -36,16 +37,22 @@ export interface Subject {
   id: number;
   code: string;
   name: string;
-  subjectType: SubjectType;
+  subjectType: SubjectType | null;
+  /** Whole-number credits; null = not recorded. Absent on backends that predate credits. */
+  credits?: number | null;
   active: boolean;
   createdAt: string | null;
   updatedAt: string | null;
+  /** Distinct (cohort, semester) pairs of the subject's active offerings. Never narrowed by list filters. */
+  offeredIn?: { batchId: number; batchName: string; semester: number }[];
 }
 
 export interface SubjectRequest {
   code: string;
   name: string;
-  subjectType: SubjectType;
+  subjectType: SubjectType | null;
+  /** Sent back unchanged when editing — the backend's PUT replaces the whole subject. */
+  credits?: number | null;
   active: boolean;
 }
 
@@ -55,6 +62,9 @@ export interface SubjectListQuery {
   search?: string;
   subjectType?: SubjectType;
   active?: boolean;
+  /** Only subjects with an active offering in this semester / for this cohort (server-side). */
+  semester?: number;
+  batchId?: number;
 }
 
 // ---------- Subject offerings ----------
@@ -64,7 +74,9 @@ export interface SubjectOffering {
   subjectId: number;
   subjectCode: string;
   subjectName: string;
-  subjectType: SubjectType;
+  subjectType: SubjectType | null;
+  /** The subject's credits; null = not recorded. Absent on backends that predate credits. */
+  credits?: number | null;
   batchId: number;
   batchName: string;
   sectionId: number;
@@ -76,6 +88,9 @@ export interface SubjectOffering {
   active: boolean;
   createdAt: string | null;
   updatedAt: string | null;
+  /** Contract §G2 — absent until the backend sends them. */
+  subjectAcronym?: string | null;
+  studentCount?: number | null;
 }
 
 export interface SubjectOfferingRequest {
@@ -127,6 +142,8 @@ export interface Assessment {
   createdAt: string | null;
   updatedAt: string | null;
   finalizedAt: string | null;
+  /** HOD-set marks entry deadline; null = none. */
+  marksEntryDueAt?: string | null;
 }
 
 export interface UpdateAssessmentRequest {

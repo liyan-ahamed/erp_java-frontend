@@ -3,16 +3,17 @@
 import { useState } from 'react';
 import { PageContainer } from '@/components/common/PageContainer';
 import { RequireRole } from '@/components/common/RequireRole';
-import { Card, CardContent } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
+import { Dialog } from '@/components/ui/Dialog';
 import { Pagination } from '@/components/ui/Pagination';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAuditLogs } from '@/hooks/useAuditLogs';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { AuditLog } from '@/types/audit';
-import { Download, X, Shield } from 'lucide-react';
+import { Download, Shield } from '@/components/ui/icons';
 
 const PAGE_SIZE = 20;
 
@@ -43,8 +44,8 @@ const csvCell = (value: string | number | null) => `"${String(value ?? '').repla
 function DetailField({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
-      <label className="text-[10px] font-semibold text-[#9A9A9A] uppercase tracking-wider">{label}</label>
-      <p className={`text-sm text-[#111111] mt-1 break-words ${mono ? 'font-mono text-xs' : ''}`}>{value}</p>
+      <label className="text-[10px] font-[550] text-muted uppercase tracking-wider">{label}</label>
+      <p className={`text-sm text-fg mt-1 break-words ${mono ? 'font-mono text-xs' : ''}`}>{value}</p>
     </div>
   );
 }
@@ -53,8 +54,8 @@ function DetailField({ label, value, mono = false }: { label: string; value: str
 function ValueBlock({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <label className="text-[10px] font-semibold text-[#9A9A9A] uppercase tracking-wider">{label}</label>
-      <pre className="text-xs text-[#666666] mt-1 p-3 bg-[#FAFAFA] rounded-[10px] border border-[#E8E8E8] overflow-x-auto whitespace-pre-wrap break-all">
+      <label className="text-[10px] font-[550] text-muted uppercase tracking-wider">{label}</label>
+      <pre className="text-xs text-muted mt-1 p-3 bg-soft rounded-[10px] border border-line overflow-x-auto whitespace-pre-wrap break-all">
         {value}
       </pre>
     </div>
@@ -85,9 +86,9 @@ function AuditLogView() {
 
   const toolbar = (
     <div className="flex items-center justify-between gap-3">
-      <p className="text-sm text-[#666666]">Most recent activity first.</p>
+      <p className="text-sm text-muted">Most recent activity first.</p>
       <Button variant="outline" size="md" onClick={exportPageCsv} disabled={!data || data.content.length === 0}>
-        <Download className="w-4 h-4 mr-1.5" /> Export This Page
+        <Download className="w-4 h-4" /> Export This Page
       </Button>
     </div>
   );
@@ -97,7 +98,7 @@ function AuditLogView() {
       <PageContainer>
         <div className="flex flex-col items-center justify-center h-96 space-y-4">
           <Spinner size="lg" />
-          <p className="text-[#666666] font-medium text-sm">Loading audit logs...</p>
+          <p className="text-muted font-medium text-sm">Loading audit logs...</p>
         </div>
       </PageContainer>
     );
@@ -106,9 +107,9 @@ function AuditLogView() {
   if (isError) {
     return (
       <PageContainer>
-        <div className="p-5 bg-[#FEF2F2] border border-[#FECACA] rounded-xl">
-          <h3 className="font-bold text-sm mb-1 text-[#DC2626]">Error Loading Audit Logs</h3>
-          <p className="text-sm text-[#DC2626]">{getApiErrorMessage(error, 'Failed to load audit logs.')}</p>
+        <div className="p-5 bg-danger-soft border border-danger/20 rounded-xl">
+          <h3 className="font-[650] text-sm mb-1 text-danger">Error Loading Audit Logs</h3>
+          <p className="text-sm text-danger">{getApiErrorMessage(error, 'Failed to load audit logs.')}</p>
         </div>
       </PageContainer>
     );
@@ -135,23 +136,23 @@ function AuditLogView() {
                 {data?.content.map((log) => (
                   <TableRow
                     key={log.id}
-                    className={`cursor-pointer ${selectedLog?.id === log.id ? 'bg-[#F5F5F5]' : ''}`}
+                    className={`cursor-pointer ${selectedLog?.id === log.id ? 'bg-soft' : ''}`}
                     onClick={() => setSelectedLog(log)}
                   >
-                    <TableCell className="whitespace-nowrap text-[#666666]">
+                    <TableCell className="whitespace-nowrap text-muted">
                       {formatShortTime(log.timestamp)}
                     </TableCell>
                     <TableCell>
                       <span className="font-medium">{log.username || '—'}</span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-[#666666]">{log.module}</span>
+                      <span className="text-muted">{log.module}</span>
                     </TableCell>
                     <TableCell>
                       <span className="font-medium">{actionLabel(log.action)}</span>
                     </TableCell>
-                    <TableCell className="text-[#666666]">{entityLabel(log)}</TableCell>
-                    <TableCell className="text-[#9A9A9A] font-mono text-xs">
+                    <TableCell className="text-muted">{entityLabel(log)}</TableCell>
+                    <TableCell className="text-muted font-mono text-xs">
                       {log.ip_address || '—'}
                     </TableCell>
                   </TableRow>
@@ -161,8 +162,8 @@ function AuditLogView() {
                   <TableRow>
                     <TableCell colSpan={6} className="h-32 text-center">
                       <div className="flex flex-col items-center gap-2">
-                        <Shield className="w-8 h-8 text-[#D4D4D4]" />
-                        <span className="text-sm text-[#666666]">No audit logs found</span>
+                        <Shield className="w-8 h-8 text-muted/60" />
+                        <span className="text-sm text-muted">No audit logs found</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -182,22 +183,12 @@ function AuditLogView() {
           </Card>
         </div>
 
-        {/* Detail Side Panel */}
+        {/* Detail dialog */}
         {selectedLog && (
-          <div className="hidden lg:block w-[400px] flex-shrink-0">
-            <Card className="sticky top-4">
-              <div className="px-6 py-4 border-b border-[#F5F5F5] flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-[#111111]">Audit Detail</h3>
-                <button
-                  onClick={() => setSelectedLog(null)}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#F5F5F5] text-[#9A9A9A] hover:text-[#111111] transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <CardContent className="p-6 space-y-5">
+          <Dialog title="Audit Detail" onClose={() => setSelectedLog(null)} wide>
+            <div className="space-y-5">
                 <div>
-                  <h4 className="text-base font-semibold text-[#111111] mb-2">{actionLabel(selectedLog.action)}</h4>
+                  <h4 className="text-base font-[550] text-fg mb-2">{actionLabel(selectedLog.action)}</h4>
                   <Badge variant="outline">{selectedLog.module}</Badge>
                 </div>
 
@@ -215,14 +206,13 @@ function AuditLogView() {
                 )}
 
                 {(selectedLog.old_value || selectedLog.new_value) && (
-                  <div className="space-y-3 pt-2 border-t border-[#F5F5F5]">
+                  <div className="space-y-3 pt-2 border-t border-line">
                     {selectedLog.old_value && <ValueBlock label="Before Value" value={selectedLog.old_value} />}
                     {selectedLog.new_value && <ValueBlock label="After Value" value={selectedLog.new_value} />}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
+            </div>
+          </Dialog>
         )}
       </div>
     </PageContainer>

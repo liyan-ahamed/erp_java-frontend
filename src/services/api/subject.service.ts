@@ -5,9 +5,9 @@ import { BackendPage, PaginatedResponse } from '@/types/api';
 import { Subject, SubjectListQuery, SubjectRequest } from '@/types/gradebook';
 
 export const subjectService = {
-  getSubjects: async ({ page, size, search, subjectType, active }: SubjectListQuery): Promise<PaginatedResponse<Subject>> => {
+  getSubjects: async ({ page, size, search, subjectType, active, semester, batchId }: SubjectListQuery): Promise<PaginatedResponse<Subject>> => {
     const response = await apiClient.get(API_ENDPOINTS.SUBJECTS.BASE, {
-      params: { page, size, search: search || undefined, subjectType, active },
+      params: { page, size, search: search || undefined, subjectType, active, semester, batchId },
     });
     return mapPage(response.data.data as BackendPage<Subject>);
   },

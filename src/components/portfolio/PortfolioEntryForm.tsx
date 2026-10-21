@@ -51,7 +51,7 @@ const validate = (f: FormState): string[] => {
 };
 
 /** Marks fields the backend requires before an entry can be submitted (not for a draft). */
-const SubmitHint = () => <span className="normal-case tracking-normal font-normal text-[#9A9A9A]"> (needed to submit)</span>;
+const SubmitHint = () => <span className="normal-case tracking-normal font-normal text-muted"> (needed to submit)</span>;
 
 export function PortfolioEntryForm({ entry, onSaved }: { entry?: PortfolioEntry; onSaved: (entry: PortfolioEntry) => void }) {
   const [form, setForm] = useState<FormState>(() => toForm(entry));
@@ -85,7 +85,7 @@ export function PortfolioEntryForm({ entry, onSaved }: { entry?: PortfolioEntry;
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
       {entry?.status === 'REJECTED' && (
-        <p className="text-xs text-[#666666] rounded-[10px] bg-[#FAFAFA] border border-[#E8E8E8] p-3">
+        <p className="text-xs text-muted rounded-[10px] bg-soft border border-line p-3">
           Saving keeps this entry in <strong>Needs Changes</strong>. Submit it again when you are ready for review.
         </p>
       )}
@@ -144,7 +144,7 @@ export function PortfolioEntryForm({ entry, onSaved }: { entry?: PortfolioEntry;
           className={TEXTAREA_CLASS}
           placeholder="What you did and what came out of it"
         />
-        <p className="text-xs text-[#9A9A9A]">
+        <p className="text-xs text-muted">
           {descriptionLength}/2000 · at least {MIN_SUBMIT_DESCRIPTION_LENGTH} characters to submit
         </p>
       </div>
@@ -184,11 +184,11 @@ export function PortfolioEntryForm({ entry, onSaved }: { entry?: PortfolioEntry;
           maxLength={500}
           placeholder="https://… (certificate, publication, event page)"
         />
-        <p className="text-xs text-[#9A9A9A]">Paste a link to the certificate or proof. File uploads are not supported.</p>
+        <p className="text-xs text-muted">Paste a link to the certificate or proof. File uploads are not supported.</p>
       </div>
 
       {clientErrors.length > 0 && (
-        <ul className="rounded-[10px] bg-red-50 p-3 text-sm text-red-600 border border-red-100 list-disc pl-6" role="alert">
+        <ul className="rounded-[10px] bg-danger-soft p-3 text-sm text-danger border border-danger/20 list-disc pl-6" role="alert">
           {clientErrors.map((e) => <li key={e}>{e}</li>)}
         </ul>
       )}

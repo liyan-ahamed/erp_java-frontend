@@ -1,4 +1,9 @@
 export const API_ENDPOINTS = {
+  /** Self-service account changes. Not served by the backend yet — see features.accountSelfService. */
+  ACCOUNT: {
+    EMAIL: '/auth/me/email',
+    PASSWORD: '/auth/me/password',
+  },
   USERS: {
     BASE: '/users',
     BY_ID: (id: number) => `/users/${id}`,
@@ -40,6 +45,10 @@ export const API_ENDPOINTS = {
   ACADEMIC: {
     BATCHES: '/batches',
     SECTIONS: '/sections',
+    SECTION_STUDENTS: (sectionId: number) => `/sections/${sectionId}/students`,
+  },
+  CURRICULA: {
+    BY_COHORT_SEMESTER: (batchId: number, semester: number) => `/curricula/batches/${batchId}/semesters/${semester}`,
   },
   DASHBOARD: {
     SUMMARY: '/dashboard/summary',
@@ -62,11 +71,22 @@ export const API_ENDPOINTS = {
     ROSTER: (offeringId: number) => `/course-enrollments/subject-offerings/${offeringId}`,
     ENROLL_SECTION: (offeringId: number) => `/course-enrollments/subject-offerings/${offeringId}/enroll-section`,
     STATUS: (id: number) => `/course-enrollments/${id}/status`,
+    REGISTRATION_STATUS: '/course-enrollments/registration-status',
+    REGISTRATION_SUMMARY: '/course-enrollments/registration-status/summary',
+    REGISTRATION_DETAIL: (studentId: number) => `/course-enrollments/registration-status/students/${studentId}`,
   },
   TIMETABLE: {
     BASE: '/timetable',
     ME: '/timetable/me',
+    PERIODS: '/timetable/periods',
     BY_ID: (id: number) => `/timetable/${id}`,
+  },
+  HOLIDAYS: {
+    BASE: '/holidays',
+    BY_ID: (id: number) => `/holidays/${id}`,
+    CALENDAR: (year: number) => `/holidays/calendars/${year}`,
+    PUBLISH: (year: number) => `/holidays/calendars/${year}/publish`,
+    UNPUBLISH: (year: number) => `/holidays/calendars/${year}/unpublish`,
   },
   ATTENDANCE: {
     SESSIONS: '/attendance/sessions',

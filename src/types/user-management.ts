@@ -15,6 +15,13 @@ export interface ManagedUser {
   permissions: string[];
   created_at: string | null;
   updated_at: string | null;
+  /** Linked student record (null for HOD / staff, or a student login without a student record). */
+  studentId?: number | null;
+  registerNumber?: string | null;
+  batchId?: number | null;
+  batchName?: string | null;
+  sectionId?: number | null;
+  sectionName?: string | null;
 }
 
 /** POST /users body (CreateUserRequest). Request fields are camelCase. */
@@ -37,4 +44,8 @@ export interface UserListQuery {
   size: number;
   search?: string;
   active?: boolean;
+  /** Server-side filters. batchId / sectionId apply to students only (role STUDENT). */
+  role?: 'HOD' | 'STAFF' | 'STUDENT';
+  batchId?: number;
+  sectionId?: number;
 }

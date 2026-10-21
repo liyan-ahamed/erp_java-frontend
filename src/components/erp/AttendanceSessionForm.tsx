@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 import { FieldLabel, FormError } from '@/components/gradebook/shared';
-import { offeringOptionLabel } from '@/components/erp/shared';
+import { TeachingSelector } from '@/components/academic/TeachingSelector';
 import { useAllSubjectOfferings } from '@/hooks/useGradebook';
+import { useBatches } from '@/hooks/useAcademic';
+import { ClassRow, TeachingSelection, resolveSelection } from '@/lib/teaching-context';
 import { useTimetableSlots } from '@/hooks/useTimetable';
 import { useSaveAttendanceSession } from '@/hooks/useAttendance';
 import { SELECT_CLASS } from '@/lib/gradebook-labels';
@@ -17,11 +19,14 @@ import { AttendanceSession } from '@/types/attendance';
  * Create (STAFF, own active offerings) or edit (DRAFT only) an attendance session.
  * The timetable slot is optional; when chosen, the backend fills the period from it.
  */
+const isActive = (r: ClassRow) => r.active;
+
 export function AttendanceSessionForm({ session, onSaved }: { session?: AttendanceSession; onSaved: (s: AttendanceSession) => void }) {
   const offerings = useAllSubjectOfferings(!session);
+  const batches = useBatches(!session);
+  const [pick, setPick] = useState<TeachingSelection | null>(null);
   const save = useSaveAttendanceSession();
   const [form, setForm] = useState({
-    subjectOfferingId: session ? String(session.subjectOfferingId) : '',
     attendanceDate: session?.attendanceDate ?? todayIso(),
     timetableSlotId: session?.timetableSlotId ? String(session.timetableSlotId) : '',
     periodNumber: session?.periodNumber ? String(session.periodNumber) : '',
@@ -30,14 +35,16 @@ export function AttendanceSessionForm({ session, onSaved }: { session?: Attendan
   const [problem, setProblem] = useState('');
   const set = (patch: Partial<typeof form>) => { setForm({ ...form, ...patch }); setProblem(''); };
 
-  const offeringId = form.subjectOfferingId ? Number(form.subjectOfferingId) : null;
+  // Create: Batch → Semester → Class over the teacher's active classes. Edit: the session's own class.
+  const selection = resolveSelection(pick ?? { batchId: null, semester: null, offeringId: null }, offerings.data ?? [], batches.data);
+  const offeringId = session ? session.subjectOfferingId : (offerings.data ?? []).some((o) => o.active && o.id === selection.offeringId) ? selection.offeringId : null;
   const slots = useTimetableSlots({ subjectOfferingId: offeringId ?? undefined }, offeringId !== null);
   const day = dayOfDate(form.attendanceDate);
   const daySlots = (slots.data ?? []).filter((s) => s.dayOfWeek === day);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!offeringId || !form.attendanceDate) return setProblem('Subject offering and date are required.');
+    if (!offeringId || !form.attendanceDate) return setProblem('Choose the class (batch, semester and class) and the date.');
     if (form.attendanceDate > todayIso()) return setProblem('Attendance date cannot be in the future.');
     if (form.periodNumber && !(Number.isInteger(Number(form.periodNumber)) && Number(form.periodNumber) > 0)) {
       return setProblem('Period must be a positive whole number.');
@@ -53,21 +60,20 @@ export function AttendanceSessionForm({ session, onSaved }: { session?: Attendan
   };
 
   if (!session && offerings.isLoading) return <div className="py-8 flex justify-center"><Spinner /></div>;
-  if (!session && offerings.isError) return <FormError error={offerings.error} fallback="Unable to load your subject offerings." />;
-  const options = (offerings.data ?? []).filter((o) => o.active);
+  if (!session && offerings.isError) return <FormError error={offerings.error} fallback="Unable to load your courses." />;
 
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
       <div className="space-y-1.5">
-        <FieldLabel htmlFor="session-offering">Subject Offering</FieldLabel>
         {session ? (
-          <p className="text-sm text-[#111111]">{session.subjectCode} — {session.subjectName} (Sec {session.sectionName})</p>
+          <>
+            <FieldLabel>Course</FieldLabel>
+            <p className="text-sm text-fg">{session.subjectCode} — {session.subjectName} (Sec {session.sectionName})</p>
+          </>
         ) : (
-          <select id="session-offering" className={`${SELECT_CLASS} w-full`} value={form.subjectOfferingId}
-            onChange={(e) => set({ subjectOfferingId: e.target.value, timetableSlotId: '' })}>
-            <option value="">Select…</option>
-            {options.map((o) => <option key={o.id} value={o.id}>{offeringOptionLabel(o)}</option>)}
-          </select>
+          <TeachingSelector rows={offerings.data ?? []} batches={batches.data} value={{ ...selection, offeringId }} classMode="required"
+            classFilter={isActive} stacked idPrefix="session"
+            onChange={(next) => { setPick(next); set({ timetableSlotId: '' }); }} />
         )}
       </div>
       <div className="space-y-1.5">
@@ -102,7 +108,7 @@ export function AttendanceSessionForm({ session, onSaved }: { session?: Attendan
         <FieldLabel htmlFor="session-topic">Topic (optional)</FieldLabel>
         <Input id="session-topic" maxLength={255} value={form.topic} onChange={(e) => set({ topic: e.target.value })} />
       </div>
-      {problem && <p className="text-sm text-red-600" role="alert">{problem}</p>}
+      {problem && <p className="text-sm text-danger" role="alert">{problem}</p>}
       {save.isError && <FormError error={save.error} fallback="Unable to save the session." />}
       <Button type="submit" isLoading={save.isPending}>{session ? 'Save Changes' : 'Create Session'}</Button>
     </form>

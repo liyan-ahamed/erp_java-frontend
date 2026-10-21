@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Award, CheckCircle2, Clock, AlertCircle, Plus, Trophy } from 'lucide-react';
+import { Award, CheckCircle2, Clock, AlertCircle, Plus, Trophy } from '@/components/ui/icons';
 import { PageContainer } from '@/components/common/PageContainer';
 import { RequireRole } from '@/components/common/RequireRole';
 import { Card } from '@/components/ui/Card';
@@ -95,11 +95,11 @@ function EntryDetail({
     <div className="space-y-6">
       <div className="space-y-2">
         <PortfolioStatusBadge status={entry.status} />
-        <h4 className="text-base font-semibold text-[#111111] break-words">{entry.title}</h4>
+        <h4 className="text-base font-[550] text-fg break-words">{entry.title}</h4>
       </div>
 
       {entry.status === 'SUBMITTED' && (
-        <p className="text-xs text-[#666666] rounded-[10px] bg-[#EFF6FF] border border-[#BFDBFE] p-3">
+        <p className="text-xs text-muted rounded-[10px] bg-accent-soft border border-accent/30 p-3">
           Waiting for faculty review. This entry is read-only until it is reviewed.
         </p>
       )}
@@ -108,14 +108,14 @@ function EntryDetail({
       <EntryContent entry={entry} />
 
       {editable && (
-        <div className="space-y-3 pt-2 border-t border-[#F5F5F5]">
+        <div className="space-y-3 pt-2 border-t border-line">
           {confirming === 'submit' ? (
             <ConfirmBox
               confirmLabel={resubmit ? 'Resubmit for Review' : 'Submit for Review'}
               message={
                 <>
                   <p className="font-medium">Submit &ldquo;{entry.title}&rdquo; for faculty review?</p>
-                  <p className="text-[#666666] mt-1">
+                  <p className="text-muted mt-1">
                     You won&apos;t be able to edit or delete it while it is pending. If a reviewer asks for changes,
                     it becomes editable again.
                   </p>
@@ -140,7 +140,7 @@ function EntryDetail({
                 {resubmit ? 'Resubmit' : 'Submit'}
               </Button>
               <Button size="sm" variant="secondary" onClick={() => onEdit(entry)}>Edit</Button>
-              <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700" onClick={() => setConfirming('delete')}>
+              <Button size="sm" variant="ghost" className="text-danger hover:text-danger" onClick={() => setConfirming('delete')}>
                 Delete
               </Button>
             </div>
@@ -201,7 +201,7 @@ function MyPortfolioView() {
       </select>
       {isFetching && !isLoading && <Spinner size="sm" />}
       <Button className="sm:ml-auto" onClick={() => setPanel({ mode: 'create' })}>
-        <Plus className="w-4 h-4 mr-1.5" /> Add Entry
+        <Plus className="w-4 h-4" /> Add Entry
       </Button>
     </div>
   );
@@ -244,7 +244,7 @@ function MyPortfolioView() {
                       {data?.content.map((entry) => (
                         <TableRow
                           key={entry.id}
-                          className={`cursor-pointer ${selectedId === entry.id ? 'bg-[#F5F5F5]' : ''}`}
+                          className={`cursor-pointer ${selectedId === entry.id ? 'bg-soft' : ''}`}
                           onClick={() => setPanel({ mode: 'view', id: entry.id })}
                         >
                           <TableCell className="font-medium max-w-[240px]">
@@ -256,14 +256,14 @@ function MyPortfolioView() {
                               {entry.title}
                             </button>
                             {entry.status === 'REJECTED' && entry.reviewNote && (
-                              <p className="text-xs text-[#DC2626] mt-0.5 line-clamp-2">Reason: {entry.reviewNote}</p>
+                              <p className="text-xs text-danger mt-0.5 line-clamp-2">Reason: {entry.reviewNote}</p>
                             )}
                           </TableCell>
                           <TableCell><Badge variant="outline">{ACTIVITY_TYPE_LABELS[entry.activityType]}</Badge></TableCell>
-                          <TableCell className="text-[#666666]">{entry.organization || '—'}</TableCell>
-                          <TableCell className="text-[#666666]">{entry.level ? LEVEL_LABELS[entry.level] : '—'}</TableCell>
-                          <TableCell className="text-[#666666] whitespace-nowrap">{dateRange(entry)}</TableCell>
-                          <TableCell className="text-[#666666]">{entry.achievementResult || '—'}</TableCell>
+                          <TableCell className="text-muted">{entry.organization || '—'}</TableCell>
+                          <TableCell className="text-muted">{entry.level ? LEVEL_LABELS[entry.level] : '—'}</TableCell>
+                          <TableCell className="text-muted whitespace-nowrap">{dateRange(entry)}</TableCell>
+                          <TableCell className="text-muted">{entry.achievementResult || '—'}</TableCell>
                           <TableCell><PortfolioStatusBadge status={entry.status} /></TableCell>
                         </TableRow>
                       ))}

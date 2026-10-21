@@ -7,16 +7,22 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { ROUTES } from '@/constants/routes';
 import { Spinner } from '../ui/Spinner';
+import { Calendar } from '../ui/icons';
+import { ROLE_LABEL, roleOf } from '@/lib/navigation';
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
+const today = () =>
+  new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+/** Forma inset shell. Only `.main` scrolls; the sidebar and its bottom controls stay in place. */
 export const AppLayout = ({ children }: AppLayoutProps) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, hasRole, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  // Phones only: the sidebar is an off-canvas menu opened from the header.
+  // Phones only: the sidebar is a drawer opened from the top bar.
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const closeMenu = useCallback(() => setIsMenuOpen(false), []);
 
@@ -26,12 +32,19 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     }
   }, [isLoading, isAuthenticated, pathname, router]);
 
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && closeMenu();
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isMenuOpen, closeMenu]);
+
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#FAFAFA]">
-        <div className="flex flex-col items-center space-y-4">
+      <div className="flex h-dvh items-center justify-center bg-bg">
+        <div className="flex flex-col items-center gap-4">
           <Spinner size="lg" />
-          <div className="text-[#666666] text-sm font-medium">Loading ERP System...</div>
+          <div className="text-muted text-[13px]">Loading your workspace…</div>
         </div>
       </div>
     );
@@ -42,15 +55,28 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   }
 
   return (
-    <div className="relative flex h-screen overflow-hidden text-[#111111] bg-[#FAFAFA]">
-      <Sidebar isOpen={isMenuOpen} onClose={closeMenu} />
+    <div className={`shell ${isMenuOpen ? 'menu-open' : ''}`}>
+      <div className="drawer-backdrop" onClick={closeMenu} aria-hidden />
+      <Sidebar onClose={closeMenu} />
 
-      <div className="flex flex-col flex-1 w-full min-w-0 md:pl-72 h-screen overflow-y-auto relative z-10">
+      <main className="main">
         <Header onOpenMenu={() => setIsMenuOpen(true)} />
-        <main className="flex-1 p-4 md:p-8 w-full min-w-0 mx-auto">
+        <div className="content">
+          <div className="utility">
+            <Calendar className="w-[15px] h-[15px]" /> {today()}
+          </div>
           {children}
-        </main>
-      </div>
+          <div className="footer-note">
+            <span>
+              <span className="status-dot" />
+              Department ERP
+            </span>
+            <span className="truncate">
+              {user?.name} · {ROLE_LABEL[roleOf(hasRole)]} workspace
+            </span>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };

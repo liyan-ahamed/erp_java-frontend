@@ -10,6 +10,21 @@ export const mapPage = <T>(page: BackendPage<T>): PaginatedResponse<T> => ({
 });
 
 /**
+ * One page of a list that is already fully loaded and filtered in the browser, in the same shape as a
+ * server page, so the shared Pagination footer works unchanged. `page` is clamped to the last page.
+ */
+export const paginateLocally = <T>(items: T[], page: number, size: number): PaginatedResponse<T> => {
+  const number = Math.min(page, Math.max(0, Math.ceil(items.length / size) - 1));
+  return {
+    content: items.slice(number * size, number * size + size),
+    totalElements: items.length,
+    totalPages: Math.ceil(items.length / size),
+    size,
+    number,
+  };
+};
+
+/**
  * Loads every page of a list endpoint (100 per request) — for small reference
  * lists used in form dropdowns, never for data tables.
  */

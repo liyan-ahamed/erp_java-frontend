@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { ArrowDown, ArrowUp, BarChart3, EyeOff, MessageSquareText, Plus, Trash2, UserRound } from 'lucide-react';
+import { ArrowDown, ArrowUp, BarChart3, EyeOff, MessageSquareText, Plus, Trash2, UserRound } from '@/components/ui/icons';
 import { PageContainer } from '@/components/common/PageContainer';
 import { RequireRole } from '@/components/common/RequireRole';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -81,39 +81,39 @@ function AnswerForm({ form, onDone }: { form: FeedbackForm; onDone: () => void }
   return (
     <form onSubmit={check} className="space-y-5" noValidate>
       {form.anonymous ? (
-        <div className="flex items-center gap-2 rounded-[10px] bg-[#EFF6FF] border border-[#BFDBFE] p-3 text-sm text-[#1E40AF]">
+        <div className="flex items-center gap-2 rounded-[10px] bg-accent-soft border border-accent/30 p-3 text-sm text-accent">
           <EyeOff className="w-4 h-4 flex-shrink-0" aria-hidden /> {ANONYMOUS_TEXT}
         </div>
       ) : (
-        <div className="flex items-center gap-2 rounded-[10px] bg-[#FFFBEB] border border-[#FDE68A] p-3 text-sm text-[#92400E]">
+        <div className="flex items-center gap-2 rounded-[10px] bg-warn-soft border border-warn/30 p-3 text-sm text-warn">
           <UserRound className="w-4 h-4 flex-shrink-0" aria-hidden /> This form is identified: your name is recorded with your answers.
         </div>
       )}
-      {form.description && <p className="text-sm text-[#666666]">{form.description}</p>}
+      {form.description && <p className="text-sm text-muted">{form.description}</p>}
       {[...form.questions].sort((a, b) => a.position - b.position).map((q, i) => (
-        <fieldset key={q.id} className={`space-y-2 rounded-[10px] p-3 border ${missing.has(q.id) ? 'border-red-300 bg-red-50/50' : 'border-transparent'}`}>
-          <legend className="text-sm font-medium text-[#111111]">
-            {i + 1}. {q.questionText} {q.required ? <span className="text-red-600" aria-label="required">*</span> : <span className="text-xs text-[#9A9A9A]">(optional)</span>}
+        <fieldset key={q.id} className={`space-y-2 rounded-[10px] p-3 border ${missing.has(q.id) ? 'border-danger bg-danger-soft' : 'border-transparent'}`}>
+          <legend className="text-sm font-medium text-fg">
+            {i + 1}. {q.questionText} {q.required ? <span className="text-danger" aria-label="required">*</span> : <span className="text-xs text-muted">(optional)</span>}
           </legend>
           {q.questionType === 'RATING' ? (
             <div role="radiogroup" aria-label={q.questionText} className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] text-[#9A9A9A]">Poor</span>
+              <span className="text-[11px] text-muted">Poor</span>
               {RATING_VALUES.map((v) => (
                 <button key={v} type="button" role="radio" aria-checked={ratings[q.id] === v} aria-label={`${v} out of 5`}
                   onClick={() => { setRatings({ ...ratings, [q.id]: v }); setConfirming(false); }}
-                  className={`w-10 h-10 rounded-lg border text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] ${
-                    ratings[q.id] === v ? 'bg-[#111111] text-white border-[#111111]' : 'bg-white text-[#111111] border-[#E8E8E8] hover:bg-[#F5F5F5]'
+                  className={`w-10 h-10 rounded-lg border text-sm font-[550] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                    ratings[q.id] === v ? 'bg-fg text-surface border-fg' : 'bg-surface text-fg border-line hover:bg-soft'
                   }`}>
                   {v}
                 </button>
               ))}
-              <span className="text-[11px] text-[#9A9A9A]">Excellent</span>
+              <span className="text-[11px] text-muted">Excellent</span>
             </div>
           ) : (
             <textarea aria-label={q.questionText} rows={3} maxLength={2000} className={TEXTAREA_CLASS} value={texts[q.id] ?? ''}
               onChange={(e) => { setTexts({ ...texts, [q.id]: e.target.value }); setConfirming(false); }} />
           )}
-          {missing.has(q.id) && <p className="text-xs text-red-600">This question is required.</p>}
+          {missing.has(q.id) && <p className="text-xs text-danger">This question is required.</p>}
         </fieldset>
       ))}
       {submit.isError && <FormError error={submit.error} fallback="Unable to submit your feedback." />}
@@ -146,12 +146,12 @@ function StudentFeedback() {
             {data.map((f) => {
               const canAnswer = f.status === 'OPEN' && !f.submitted;
               return (
-                <Card key={f.id} className={openForm?.id === f.id ? 'ring-1 ring-[#111111]' : ''}>
+                <Card key={f.id} className={openForm?.id === f.id ? 'ring-1 ring-accent' : ''}>
                   <CardContent className="p-5 space-y-3">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-base font-semibold text-[#111111]">{f.title}</h3>
+                      <h3 className="text-base font-[550] text-fg">{f.title}</h3>
                     </div>
-                    <p className="text-xs text-[#666666]">{f.targetLabel}</p>
+                    <p className="text-xs text-muted">{f.targetLabel}</p>
                     <div className="flex flex-wrap gap-2">
                       <StatusBadge info={f.status === 'OPEN' ? { label: 'Open', variant: 'success' } : { label: 'Closed', variant: 'outline' }} />
                       {f.submitted ? <Badge variant="success">Submitted</Badge> : <Badge variant="warning">Not submitted</Badge>}
@@ -160,7 +160,7 @@ function StudentFeedback() {
                     {canAnswer ? (
                       <Button size="sm" onClick={() => { setThanks(''); setOpenForm(f); }}>Give Feedback</Button>
                     ) : (
-                      <p className="text-xs text-[#9A9A9A]">{f.submitted ? 'You have already submitted this form.' : 'This form is closed.'}</p>
+                      <p className="text-xs text-muted">{f.submitted ? 'You have already submitted this form.' : 'This form is closed.'}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -268,7 +268,7 @@ function FormBuilder({ form, onSaved }: { form?: FeedbackForm; onSaved: () => vo
         )}
       </div>
       <fieldset className="space-y-1">
-        <legend className="text-[10px] font-semibold text-[#9A9A9A] uppercase tracking-wider mb-1">Responses</legend>
+        <legend className="text-[10px] font-[550] text-muted uppercase tracking-wider mb-1">Responses</legend>
         <label className="flex items-center gap-2 text-sm"><input type="radio" name="fb-mode" checked={state.anonymous} onChange={() => set({ anonymous: true })} /> Anonymous — no student identity is stored with answers</label>
         <label className="flex items-center gap-2 text-sm"><input type="radio" name="fb-mode" checked={!state.anonymous} onChange={() => set({ anonymous: false })} /> Identified — responses show the student</label>
       </fieldset>
@@ -276,9 +276,9 @@ function FormBuilder({ form, onSaved }: { form?: FeedbackForm; onSaved: () => vo
       <div className="space-y-3">
         <FieldLabel>Questions</FieldLabel>
         {questions.map((q, i) => (
-          <div key={q.key} className="rounded-[10px] border border-[#E8E8E8] p-3 space-y-2">
+          <div key={q.key} className="rounded-[10px] border border-line p-3 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#666666]">Question {i + 1}</span>
+              <span className="text-xs font-[550] text-muted">Question {i + 1}</span>
               <div className="flex gap-1">
                 <Button type="button" size="sm" variant="ghost" aria-label={`Move question ${i + 1} up`} disabled={i === 0} onClick={() => move(i, -1)}><ArrowUp className="w-3.5 h-3.5" /></Button>
                 <Button type="button" size="sm" variant="ghost" aria-label={`Move question ${i + 1} down`} disabled={i === questions.length - 1} onClick={() => move(i, 1)}><ArrowDown className="w-3.5 h-3.5" /></Button>
@@ -296,10 +296,10 @@ function FormBuilder({ form, onSaved }: { form?: FeedbackForm; onSaved: () => vo
           </div>
         ))}
         <Button type="button" size="sm" variant="secondary" disabled={questions.length >= 50} onClick={() => { setQuestions([...questions, newQuestion()]); setDirty(true); }}>
-          <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Question
+          <Plus className="w-3.5 h-3.5" /> Add Question
         </Button>
       </div>
-      {problem && <p className="text-sm text-red-600" role="alert">{problem}</p>}
+      {problem && <p className="text-sm text-danger" role="alert">{problem}</p>}
       {action.isError && <FormError error={action.error} fallback="Unable to save the feedback form." />}
       <Button type="submit" isLoading={action.isPending}>{form ? 'Save Draft Form' : 'Create Draft Form'}</Button>
     </form>
@@ -327,9 +327,9 @@ function Analytics({ form }: { form: FeedbackForm }) {
         <StatTile label="Response Rate" value={a.responseRatePercentage === null ? '—' : `${Number(a.responseRatePercentage)}%`} />
       </div>
       {[...a.questions].sort((x, y) => x.position - y.position).map((q) => (
-        <div key={q.questionId} className="rounded-[10px] border border-[#E8E8E8] p-3 space-y-2">
-          <p className="text-sm font-medium text-[#111111]">{q.position}. {q.questionText}</p>
-          <p className="text-xs text-[#9A9A9A]">{q.answers} answer(s)</p>
+        <div key={q.questionId} className="rounded-[10px] border border-line p-3 space-y-2">
+          <p className="text-sm font-medium text-fg">{q.position}. {q.questionText}</p>
+          <p className="text-xs text-muted">{q.answers} answer(s)</p>
           {q.questionType === 'RATING' ? (
             <>
               <p className="text-sm">Average: <strong>{q.averageRating === null ? '—' : Number(q.averageRating)}</strong> / 5</p>
@@ -339,21 +339,21 @@ function Analytics({ form }: { form: FeedbackForm }) {
                   const width = q.answers > 0 ? (count / q.answers) * 100 : 0;
                   return (
                     <li key={v} className="flex items-center gap-2 text-xs">
-                      <span className="w-6 text-[#666666]">{v}★</span>
-                      <span className="flex-1 h-2 rounded-full bg-[#F5F5F5] overflow-hidden" aria-hidden>
-                        <span className="block h-full bg-[#111111]" style={{ width: `${width}%` }} />
+                      <span className="w-6 text-muted">{v}★</span>
+                      <span className="flex-1 h-2 rounded-full bg-soft overflow-hidden" aria-hidden>
+                        <span className="block h-full bg-fg" style={{ width: `${width}%` }} />
                       </span>
-                      <span className="w-8 text-right text-[#111111]">{count}</span>
+                      <span className="w-8 text-right text-fg">{count}</span>
                     </li>
                   );
                 })}
               </ul>
             </>
           ) : (q.textAnswers ?? []).length === 0 ? (
-            <p className="text-xs text-[#9A9A9A]">No text answers.</p>
+            <p className="text-xs text-muted">No text answers.</p>
           ) : (
             <ul className="space-y-1 max-h-48 overflow-y-auto">
-              {(q.textAnswers ?? []).map((t, i) => <li key={i} className="text-sm text-[#111111] bg-[#FAFAFA] rounded-lg px-2 py-1.5">{t}</li>)}
+              {(q.textAnswers ?? []).map((t, i) => <li key={i} className="text-sm text-fg bg-soft rounded-lg px-2 py-1.5">{t}</li>)}
             </ul>
           )}
         </div>
@@ -362,17 +362,17 @@ function Analytics({ form }: { form: FeedbackForm }) {
       {showResponses && (
         responses.isLoading ? <Spinner size="sm" />
           : responses.isError || !responses.data ? <ErrorBanner error={responses.error} fallback="Unable to load responses." />
-          : responses.data.responses.length === 0 ? <p className="text-sm text-[#9A9A9A]">No responses yet.</p>
+          : responses.data.responses.length === 0 ? <p className="text-sm text-muted">No responses yet.</p>
           : (
             <div className="space-y-2">
-              {responses.data.anonymous && <p className="text-xs text-[#666666]">Anonymous form: responses carry no student, no time and are shown in random order.</p>}
+              {responses.data.anonymous && <p className="text-xs text-muted">Anonymous form: responses carry no student, no time and are shown in random order.</p>}
               {responses.data.responses.map((r, i) => (
-                <div key={i} className="rounded-[10px] border border-[#E8E8E8] p-3 space-y-1">
-                  <p className="text-xs font-semibold text-[#666666]">
+                <div key={i} className="rounded-[10px] border border-line p-3 space-y-1">
+                  <p className="text-xs font-[550] text-muted">
                     {responses.data.anonymous ? `Response ${i + 1}` : `${r.studentName ?? ''} ${r.registerNumber ? `(${r.registerNumber})` : ''} · ${formatDateTime(r.submittedAt)}`}
                   </p>
                   {r.answers.map((ans) => (
-                    <p key={ans.questionId} className="text-sm"><span className="text-[#9A9A9A]">{questionText.get(ans.questionId) ?? 'Question'}:</span> {ans.rating !== null ? `${ans.rating}/5` : ans.textAnswer}</p>
+                    <p key={ans.questionId} className="text-sm"><span className="text-muted">{questionText.get(ans.questionId) ?? 'Question'}:</span> {ans.rating !== null ? `${ans.rating}/5` : ans.textAnswer}</p>
                   ))}
                 </div>
               ))}
@@ -409,7 +409,7 @@ function HodFeedback() {
           <option value="">All Targets</option>
           {FEEDBACK_TARGET_TYPES.map((t) => <option key={t} value={t}>{FEEDBACK_TARGET_LABELS[t]}</option>)}
         </select>
-        <Button size="sm" onClick={() => setPanel({ mode: 'create' })}><Plus className="w-4 h-4 mr-1.5" /> New Feedback Form</Button>
+        <Button size="sm" onClick={() => setPanel({ mode: 'create' })}><Plus className="w-4 h-4" /> New Feedback Form</Button>
         {isFetching && !isLoading && <Spinner size="sm" />}
       </FilterBar>
       {action.isError && <FormError error={action.error} fallback="Unable to change the feedback form." />}
@@ -446,8 +446,8 @@ function HodFeedback() {
                   <TableBody>
                     {data.content.map((f) => (
                       <TableRow key={f.id}>
-                        <TableCell className="font-medium">{f.title}<div className="text-[11px] text-[#9A9A9A] font-normal">{f.questions.length} question(s)</div></TableCell>
-                        <TableCell className="text-[#666666]">{f.targetLabel}</TableCell>
+                        <TableCell className="font-medium">{f.title}<div className="text-[11px] text-muted font-normal">{f.questions.length} question(s)</div></TableCell>
+                        <TableCell className="text-muted">{f.targetLabel}</TableCell>
                         <TableCell><ModeBadge anonymous={f.anonymous} /></TableCell>
                         <TableCell><StatusBadge info={FEEDBACK_FORM_STATUS_BADGE[f.status]} /></TableCell>
                         <TableCell>{f.submissionCount ?? 0}</TableCell>
@@ -456,7 +456,7 @@ function HodFeedback() {
                           {f.status === 'DRAFT' && <Button size="sm" variant="ghost" onClick={() => { action.reset(); setConfirm({ form: f, action: 'open' }); }}>Open</Button>}
                           {f.status === 'OPEN' && <Button size="sm" variant="ghost" onClick={() => { action.reset(); setConfirm({ form: f, action: 'close' }); }}>Close</Button>}
                           {f.status !== 'DRAFT' && (
-                            <Button size="sm" variant="ghost" onClick={() => setPanel({ mode: 'analytics', form: f })}><BarChart3 className="w-3.5 h-3.5 mr-1" /> Analytics</Button>
+                            <Button size="sm" variant="ghost" onClick={() => setPanel({ mode: 'analytics', form: f })}><BarChart3 className="w-3.5 h-3.5" /> Analytics</Button>
                           )}
                         </TableCell>
                       </TableRow>
