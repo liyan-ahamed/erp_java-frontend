@@ -567,3 +567,4 @@ Removing Workshop, Conference, Technical Event, Club Activity and Other from the
     - overview;
     - CAT_1 view;
     - STAFF PUT on the END_SEMESTER period → 403. That check used a fake student id, so nothing was written.
+- 2026-10-21: frontend: **Polls / deadlines audience (PROPOSED for backend).** `GET /student-schedules/audience` returns every section (19) and every active student (695) to any STAFF user, and `POST /student-schedules` accepts any `section_ids` / `student_ids`. The frontend now shows STAFF only the sections of their own **active** subject offerings, and only the students in those sections (staff demo: 9 classes, 350 students). Needed server-side: scope the audience the same way for STAFF, and reject (403) a create that targets other sections or students. HOD unchanged.

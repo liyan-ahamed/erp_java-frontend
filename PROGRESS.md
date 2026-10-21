@@ -38,6 +38,7 @@ Frontend only. **No backend code was changed.** Not committed. Contract: `docs/E
   - **CAT:** FINALIZED gradebook assessments only. Drafts say "not results yet" and link to Assessments.
   - No result editor is rendered for anyone any more (the HOD sheet keeps Publish only).
 - **Portfolio Review (STAFF filter only):** Workshop, Conference, Technical Event, Club Activity and Other were removed from the Activity Type dropdown. The HOD keeps all 11, and "All Activity Types" still returns every record.
+- **Set Poll / Set Deadline (STAFF):** the Classes and Specific students lists now show only the sections of the teacher's own active course assignments (`components/schedule/StudentSchedulePage.tsx`). Before, every section and student was listed (staff demo: 19 → 9 classes, 695 → 350 students). The backend still accepts any section on create — logged in the contract for the backend agent.
 - **Header breadcrumb** now reads section / page ("Teaching / Assessments"). `PageContainer` gained a `backLink` slot.
 
 ### Decisions

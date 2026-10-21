@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import {
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { getApiErrorMessage } from "@/lib/api-error";
+import { useAllSubjectOfferings } from "@/hooks/useGradebook";
 
 function PollResponseOptions({ item }: { item: StudentSchedule }) {
   const { hasRole } = useAuth();
@@ -82,6 +83,19 @@ export function StudentSchedulePage({ type }: { type: StudentScheduleType }) {
     !authLoading && allowed,
   );
   const { data: audience } = useScheduleAudience(isStaff);
+  // The audience endpoint lists every section and student. STAFF may only target the sections they
+  // teach: those of their own active course assignments (GET /subject-offerings is staff-scoped).
+  const offerings = useAllSubjectOfferings(isStaff);
+  const myAudience = useMemo(() => {
+    if (!audience || !offerings.data) return null;
+    const mySections = new Set(
+      offerings.data.filter((o) => o.active).map((o) => o.sectionId),
+    );
+    return {
+      classes: audience.classes.filter((c) => mySections.has(c.id)),
+      students: audience.students.filter((s) => mySections.has(s.sectionId)),
+    };
+  }, [audience, offerings.data]);
   const create = useCreateStudentSchedule();
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
@@ -251,8 +265,18 @@ export function StudentSchedulePage({ type }: { type: StudentScheduleType }) {
                 )}
                 <div>
                   <p className="mb-2 text-sm font-medium">Classes</p>
+                  {offerings.isError && (
+                    <p className="mb-2 text-sm text-danger">
+                      {getApiErrorMessage(offerings.error, "Unable to load your classes.")}
+                    </p>
+                  )}
+                  {myAudience?.classes.length === 0 && (
+                    <p className="mb-2 text-sm text-muted">
+                      No classes are assigned to you yet.
+                    </p>
+                  )}
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {audience?.classes.map((item) => (
+                    {myAudience?.classes.map((item) => (
                       <label
                         key={item.id}
                         className="flex gap-2 rounded-lg border border-line p-3 text-sm"
@@ -274,7 +298,7 @@ export function StudentSchedulePage({ type }: { type: StudentScheduleType }) {
                     Specific students (optional)
                   </p>
                   <div className="max-h-52 overflow-y-auto rounded-lg border border-line p-2">
-                    {audience?.students.map((item) => (
+                    {myAudience?.students.map((item) => (
                       <label key={item.id} className="flex gap-2 p-2 text-sm">
                         <input
                           type="checkbox"
